@@ -1,0 +1,106 @@
+# Finance App
+
+Android-приложение для локального учёта доходов и расходов. Kotlin Multiplatform
+shared-логика, Compose Material 3, Room/SQLite. Работает без аккаунта и сети.
+
+## Возможности
+
+- Ручной ввод, изменение и подтверждённое удаление операций, категории и фильтры.
+- Точные суммы в minor units, исходная валюта и сохранённый снимок конвертации.
+- Только локальные явно выбранные курсы; автоматическая загрузка курсов отключена.
+- Месячный бюджет, история и аналитика за30 завершённых календарных дней.
+- JSON backup с проверкой и подтверждением замены, CSV export через Android SAF.
+- Светлая/тёмная/системная тема.
+- Экспериментальные локальные AI-черновики с обязательным подтверждением каждой
+  операции. Ошибка AI не сохраняет операции и не блокирует ручной учёт.
+
+AI не прошёл квалификацию скорости и качества. Подключение модели не означает
+готовность генерации к выпуску. Обычная сборка работает без модели. Приложение
+не скачивает веса и не отправляет финансовые данные внешнему AI.
+
+## Структура
+
+- `androidApp/`: Android UI, платформенные адаптеры, опциональный JNI inference.
+- `shared/`: Money/FX, ledger, бюджеты, аналитика, Room, backup и AI validation.
+- `scripts/`: проверки границ и синтетические emulator smoke runners.
+- `docs/PRD.md`: продуктовые требования.
+- `docs/ARCHITECTURE.md`: архитектура и инварианты.
+- `docs/AI_INFERENCE.md`: AI contract, безопасность и критерии оценки.
+- `docs/TEST_STRATEGY.md`: стратегия проверок.
+
+Исходники содержат только синтетические тестовые fixtures. Веса, датасеты,
+приватные prompts, внутренние отчёты и конфигурации рабочих машин не публикуются.
+
+## Сборка
+
+Нужны JDK17 и Android SDK: platform36, Build Tools35.0.0. Настройте `JAVA_HOME`
+и `ANDROID_HOME` либо локальный `local.properties`. Версии зависимостей закреплены
+в `gradle/libs.versions.toml`, Gradle Wrapper8.13 проверяет SHA дистрибутива.
+
+```sh
+./gradlew :shared:allTests :shared:ktlintCheck :androidApp:ktlintCheck \
+  :androidApp:testDebugUnitTest :androidApp:lintDebug \
+  :androidApp:assembleDebug :androidApp:assembleDebugAndroidTest --no-daemon
+python3 -m unittest discover -s scripts -p 'test_*.py'
+python3 scripts/check_boundaries.py
+```
+
+Общий JVM core можно собрать без Android SDK и модели:
+
+```sh
+./gradlew -PcoreOnly=true :shared:jvmTest :shared:ktlintCheck --no-daemon
+```
+
+Первое разрешение зависимостей требует интернета; кешированную сборку можно
+повторить с `--offline`. Android-приложение не требует INTERNET permission.
+CI компилирует instrumentation APK; компиляция не считается выполнением UI-тестов.
+
+## Проверка Android
+
+Минимальный API29. Для обычных UI/DB проверок нужен запущенный Android emulator;
+для экспериментального inference — ARM64 с8ГБ RAM или больше. Эмулятор не
+подтверждает скорость, энергопотребление и тепловое поведение физического устройства.
+
+```sh
+adb devices -l
+adb -s <emulator-serial> install -r androidApp/build/outputs/apk/debug/androidApp-debug.apk
+adb -s <emulator-serial> shell am start -W -n app.finance.android/.MainActivity
+./gradlew :androidApp:connectedDebugAndroidTest --no-daemon
+```
+
+Smoke runners, которым нужен пустой ledger, отказываются работать с существующими
+данными. Перед запуском прочитайте соответствующий скрипт. Не очищайте пользовательские
+данные ради теста. Финансовые правила и записи проверяются синтетическими fixtures.
+
+## Опциональная native debug сборка
+
+NDK27.2.12479018, CMake3.22.1 и отдельно предоставленный checkout llama.cpp revision
+`060b2fea4ed528810ddc91d48fb22b3e4d63eb85`:
+
+```sh
+./gradlew -PnativeAi=true -PllamaSourceDir=<absolute-checkout-path> \
+  :androidApp:assembleDebug --no-daemon
+```
+
+Артефакты модели и system prompt нужно получить отдельно с подтверждёнными правами
+использования. Их допустимые size/SHA указаны в `docs/models/day07-iteration4.json`;
+исходные веса и prompt в репозитории отсутствуют. Приложение принимает только
+проверенные файлы. Установка на явно выбранный эмулятор:
+
+```sh
+python3 scripts/deploy_local_ai.py --adb <adb-path> --serial <emulator-serial> \
+  --apk androidApp/build/outputs/apk/debug/androidApp-debug.apk \
+  --model <verified-model.gguf> --system <verified-system.txt>
+```
+
+Скрипт проверяет SHA, сохраняет данные приложения и не заменяет отличающиеся файлы.
+При входе в AI debug-сборка показывает проверку/загрузку, прогресс и причины ошибок.
+Production AI остаётся выключенным. Нативная сборка требует отдельной device
+проверки; обычный CI её не квалифицирует.
+
+## Лицензии и ограничения
+
+См. `THIRD_PARTY_NOTICES.md` и включённые upstream license notices. Публикация
+исходников не предоставляет отдельную лицензию на модель, датасеты или prompts.
+Лицензия приложения отдельно не объявлена. Это исходный проект, не подписанный
+релиз и не подтверждение готовности AI к использованию.
