@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,7 +36,7 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
     Column(
         Modifier.fillMaxSize().padding(
             padding
-        ).verticalScroll(rememberScrollState()).padding(24.dp),
+        ).consumeWindowInsets(padding).verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(

@@ -142,7 +142,8 @@ internal fun BudgetScreen(state: LedgerUiState, model: LedgerViewModel) {
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Decimal
                         ),
-                        modifier = Modifier.fillMaxWidth().testTag("budget_amount")
+                        modifier = Modifier.fillMaxWidth().keepFocusedInputVisible()
+                            .testTag("budget_amount")
                     )
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(onClick = {

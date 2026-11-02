@@ -1,12 +1,15 @@
 package app.finance.android.ledger
 
+import android.content.res.Configuration
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -21,6 +24,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -46,11 +51,21 @@ internal fun LedgerField(
     multiline: Boolean = false,
     readOnly: Boolean = false
 ) {
+    val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
+    val compact = keyboardOpen &&
+        LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     OutlinedTextField(
         value = value, onValueChange = { onChange(it.take(limit + 1)) },
         label = { Text(label) }, supportingText = hint?.let { { Text(it) } },
-        modifier = Modifier.fillMaxWidth().testTag(tag), enabled = enabled, readOnly = readOnly,
-        singleLine = !multiline, minLines = if (multiline) 3 else 1,
+        modifier = Modifier.fillMaxWidth().keepFocusedInputVisible().testTag(tag),
+        enabled = enabled, readOnly = readOnly,
+        singleLine = !multiline,
+        minLines = if (multiline && !compact) 3 else 1,
+        maxLines = when {
+            !multiline || compact -> 1
+            keyboardOpen -> 3
+            else -> Int.MAX_VALUE
+        },
         keyboardOptions = KeyboardOptions(
             keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Text,
             imeAction = if (multiline) ImeAction.Default else ImeAction.Next

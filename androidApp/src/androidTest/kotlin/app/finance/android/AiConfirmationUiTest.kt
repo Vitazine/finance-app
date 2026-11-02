@@ -1,12 +1,16 @@
 package app.finance.android
 
+import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.ui.test.assertTextContains
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelStore
@@ -40,9 +44,10 @@ import org.junit.Rule
 import org.junit.Test
 
 class AiConfirmationUiTest {
-    @get:Rule val compose = createComposeRule()
+    @get:Rule val compose = createAndroidComposeRule<ComponentActivity>()
     private val context get() = InstrumentationRegistry.getInstrumentation().targetContext
     private val name = "fin017-ui-" + UUID.randomUUID() + ".db"
+    private var previousKeyboard = "null"
     private lateinit var store: LedgerStore
     private val models = ViewModelStore()
     private lateinit var ai: AiViewModel
@@ -51,7 +56,20 @@ class AiConfirmationUiTest {
 ""","amount":"12.50","currency":"USD","category_hint":"Fixture","date":"2""" +
 """026-11-02","description":"Synthetic"}],"missing_fields":[]}"""
 
+    private fun shell(command: String): String =
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(
+            InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(command)
+        ).bufferedReader().use { it.readText().trim() }
+
     @Before fun setup() = runBlocking<Unit> {
+        previousKeyboard = shell("settings get secure show_ime_with_hard_keyboard")
+        shell("settings put secure show_ime_with_hard_keyboard 1")
+        compose.runOnUiThread {
+            compose.activity.enableEdgeToEdge()
+            compose.activity.window.setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+            )
+        }
         store = openLedgerStore(context, name)
         val usd = (CurrencyCode.resolve("USD") as MoneyResult.Success).value
         store.settings.initialize((LedgerSettings.create(usd, "UTC") as LedgerResult.Success).value)
@@ -63,15 +81,27 @@ class AiConfirmationUiTest {
     }
 
     @After fun close() {
-        val jobs =
-            listOfNotNull(
-                if (::ai.isInitialized) ai.viewModelScope.coroutineContext[Job] else null,
-                if (::ledger.isInitialized) ledger.viewModelScope.coroutineContext[Job] else null
-            )
-        compose.runOnUiThread { models.clear() }
-        runBlocking { withTimeout(15000) { jobs.forEach { it.join() } } }
-        store.close()
-        context.deleteDatabase(name)
+        try {
+            val jobs =
+                listOfNotNull(
+                    if (::ai.isInitialized) ai.viewModelScope.coroutineContext[Job] else null,
+                    if (::ledger.isInitialized) {
+                        ledger.viewModelScope.coroutineContext[Job]
+                    } else {
+                        null
+                    }
+                )
+            compose.runOnUiThread { models.clear() }
+            runBlocking { withTimeout(15000) { jobs.forEach { it.join() } } }
+            store.close()
+            context.deleteDatabase(name)
+        } finally {
+            if (previousKeyboard == "null") {
+                shell("settings delete secure show_ime_with_hard_keyboard")
+            } else {
+                shell("settings put secure show_ime_with_hard_keyboard $previousKeyboard")
+            }
+        }
     }
     private fun render(output: String = raw, delay: Long = 0) {
         val owner = object : ViewModelStoreOwner {
@@ -109,6 +139,21 @@ class AiConfirmationUiTest {
     }
     private fun text(tag: String, value: String) {
         compose.onNodeWithTag(tag).performScrollTo().performTextReplacement(value)
+        // Touch coordinates must be taken after Android finishes resizing for the real IME.
+        var previousBottom = -1
+        var stableSince = android.os.SystemClock.elapsedRealtime()
+        compose.waitUntil(10000) {
+            val insets = ViewCompat.getRootWindowInsets(compose.activity.window.decorView)
+            val bottom = insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (bottom != previousBottom) {
+                previousBottom = bottom
+                stableSince = now
+            }
+            bottom > 0 &&
+                insets?.isVisible(WindowInsetsCompat.Type.ime()) == true &&
+                now - stableSince >= 350
+        }
     }
     private fun waitTag(tag: String) {
         compose.waitUntil(15000) {

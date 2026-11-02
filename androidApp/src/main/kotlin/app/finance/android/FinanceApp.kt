@@ -5,6 +5,7 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -91,18 +92,23 @@ internal fun FinanceApp(
             }
         }
     }
-    Scaffold(modifier = Modifier.semantics { testTagsAsResourceId = true }, bottomBar = {
-        if (editorVisible) {
-            Box(Modifier.navigationBarsPadding().imePadding()) { EditorActions(state, model) }
-        } else {
-            FinanceNavigation(selected, select)
+    Scaffold(
+        modifier = Modifier.imePadding().semantics {
+            testTagsAsResourceId = true
+        },
+        bottomBar = {
+            if (editorVisible) {
+                Box(Modifier.navigationBarsPadding()) { EditorActions(state, model) }
+            } else {
+                FinanceNavigation(selected, select)
+            }
         }
-    }) { padding ->
+    ) { padding ->
         if (editorVisible) {
             EntryEditor(state, model, padding)
         } else {
             Box(
-                Modifier.fillMaxSize().padding(padding),
+                Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding),
                 contentAlignment = Alignment.TopCenter
             ) {
                 Box(Modifier.widthIn(max = 720.dp).fillMaxSize()) {
