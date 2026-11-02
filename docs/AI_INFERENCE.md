@@ -63,3 +63,20 @@ Initial proposed target: ≥98% exact match on type and amount in independent co
 - Run inference off main thread; support cancellation, lifecycle cleanup and bounded resource consumption.
 - Treat model output as untrusted data, not instructions. Do not leak financial text to external APIs or diagnostics.
 - Do not download weights automatically or include multi-GB weights in APK without explicit approval.
+
+## 6. Explicit debug generation diagnostics
+
+The native debug UI offers an opt-in diagnostic request with a600-second deadline.
+Default generation and model loading remain120seconds; release wiring cannot opt
+into the longer deadline. Diagnostics use the same model, prompt, parser and CPU
+settings. No context caching, GPU backend or model substitution is implied.
+
+Live measurements contain only numeric phase/counters: preparation, input prefill,
+completed input tokens, output token count, time to first token, elapsed time,
+post-first-token throughput and process PSS. A missing first-token measurement is
+displayed as not yet observed. Native input progress advances after completed
+decode batches. Counts do not establish semantic correctness or financial validity.
+Normal app metrics are transient and are not written to logs or disk. Explicit
+instrumentation experiments use synthetic inputs and may save numeric-only local
+reports/screenshots; they do not access the user's ledger. Cancellation waits for
+the native worker before releasing resources. Late canceled callbacks are ignored.

@@ -113,6 +113,15 @@ import app.finance.android.ledger.message
                 Text(stringResource(R.string.ai_connect_retry))
             }
         }
+        if (s.generating) {
+            CircularProgressIndicator(Modifier.testTag("ai_loading"))
+            TextButton(
+                onClick = model::cancel,
+                modifier = Modifier.testTag("ai_cancel_generation")
+            ) {
+                Text(stringResource(R.string.ai_cancel))
+            }
+        }
         TextButton(
             onClick = onManual,
             enabled = !s.busy,
@@ -120,6 +129,7 @@ import app.finance.android.ledger.message
         ) {
             Text(stringResource(R.string.ai_manual_entry))
         }
+        if (model.experimental) InferenceDiagnosticPanel(s, model::diagnostics)
         if (s.previews.isEmpty()) {
             LedgerField(
                 s.prompt,
@@ -143,15 +153,6 @@ import app.finance.android.ledger.message
                 modifier = Modifier.testTag("ai_generate")
             ) {
                 Text(stringResource(R.string.ai_generate))
-            }
-        }
-        if (s.generating) {
-            CircularProgressIndicator(Modifier.testTag("ai_loading"))
-            TextButton(
-                onClick = model::cancel,
-                modifier = Modifier.testTag("ai_cancel_generation")
-            ) {
-                Text(stringResource(R.string.ai_cancel))
             }
         }
         s.error?.let {

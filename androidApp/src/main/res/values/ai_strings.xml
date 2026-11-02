@@ -45,4 +45,21 @@
     <string name="ai_model_hash">Контрольная сумма модели не совпадает. Файл повреждён или выбрана другая модель. Установите проверенный файл day-07 Q4_K_M.</string>
     <string name="ai_connect_timeout">Подключение превысило 120 секунд. Закройте тяжёлые приложения и повторите попытку. Ручной ввод доступен.</string>
     <string name="ai_connect_failed">Не удалось подключить модель: ошибка локального движка. Повторите подключение; если ошибка повторяется, проверьте совместимость модели и debug APK. Ручной ввод доступен.</string>
+    <string name="ai_diagnostic_label">Диагностика генерации · debug</string>
+    <string name="ai_diagnostic_notice">Только debug: запрос может выполняться до 10 минут. Отмена доступна. Измеряются этапы, время, токены и память процесса; текст запроса и ответ не записываются в диагностику.</string>
+    <string name="ai_diagnostic_running">Идёт диагностический запрос</string>
+    <string name="ai_diagnostic_finished">Диагностический запрос завершён</string>
+    <string name="ai_diagnostic_canceled">Диагностический запрос остановлен</string>
+    <string name="ai_diagnostic_prepare">Этап: подготовка контекста</string>
+    <string name="ai_diagnostic_prefill">Этап: обработка входного контекста</string>
+    <string name="ai_diagnostic_decode">Этап: генерация ответа</string>
+    <string name="ai_diagnostic_native_done">Этап: вычисление ответа завершено</string>
+    <string name="ai_diagnostic_elapsed">Измеренное время: %1$d с · лимит 600 с</string>
+    <string name="ai_diagnostic_prompt">Контекст: обработано %1$d из %2$d токенов</string>
+    <string name="ai_diagnostic_tokens">Токенов ответа: %1$d</string>
+    <string name="ai_diagnostic_first">Первый токен через %1$d мс</string>
+    <string name="ai_diagnostic_no_first">Первый токен ещё не получен</string>
+    <string name="ai_diagnostic_rate">Скорость после первого токена: %1$s ток/с</string>
+    <string name="ai_diagnostic_no_rate">Скорость после первого токена: ещё не измерена</string>
+    <string name="ai_diagnostic_memory">Память процесса (PSS): %1$d МиБ</string>
 </resources>

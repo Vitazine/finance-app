@@ -62,7 +62,10 @@ internal data class AiUiState(
     val connecting: Boolean = false,
     val connected: Boolean = false,
     val connectionError: AiError? = null,
-    val connectionStatus: ModelConnection = ModelConnection()
+    val connectionStatus: ModelConnection = ModelConnection(),
+    val diagnosticMode: Boolean = false,
+    val generationProgress: GenerationProgress? = null,
+    val diagnosticCanceled: Boolean = false
 ) {
     override fun toString() = "AiUiState"
 }
@@ -226,6 +229,17 @@ internal class AiViewModel(
             }
         }
     }
+    fun diagnostics(enabled: Boolean) {
+        if (experimental && !state.value.busy && state.value.previews.isEmpty()) {
+            mutable.update {
+                it.copy(
+                    diagnosticMode = enabled,
+                    generationProgress = null,
+                    diagnosticCanceled = false
+                )
+            }
+        }
+    }
     fun generate() {
         if (state.value.busy || state.value.previews.isNotEmpty() || !available) return
         val e = engine
@@ -236,6 +250,7 @@ internal class AiViewModel(
             return
         }
         val text = state.value.prompt
+        val diagnostic = experimental && state.value.diagnosticMode
         val token = ++epoch
         mutable.update {
             it.copy(
@@ -243,7 +258,9 @@ internal class AiViewModel(
                 generating = true,
                 error = null,
                 clarification = false,
-                unsupported = false
+                unsupported = false,
+                generationProgress = if (diagnostic) GenerationProgress() else null,
+                diagnosticCanceled = false
             )
         }
         userCanceledGeneration = false
@@ -290,7 +307,20 @@ internal class AiViewModel(
                             publishError(token, (request as AiResult.Failure).error)
                             return@withContext
                         }
-                        when (val output = e.generate(request.value)) {
+                        val attempt = currentCoroutineContext()
+                        val output = if (diagnostic && e is DiagnosticInferenceEngine) {
+                            e.generate(
+                                request.value,
+                                GenerationOptions(diagnostic = true)
+                            ) { progress ->
+                                if (token == epoch && attempt.isActive) {
+                                    mutable.update { it.copy(generationProgress = progress) }
+                                }
+                            }
+                        } else {
+                            e.generate(request.value)
+                        }
+                        when (output) {
                             is AiResult.Failure -> {
                                 releaseRuntime = true
                                 releaseError = output.error
@@ -402,7 +432,10 @@ internal class AiViewModel(
                     connected = it.connected,
                     connecting = it.connecting,
                     connectionError = it.connectionError,
-                    connectionStatus = it.connectionStatus
+                    connectionStatus = it.connectionStatus,
+                    diagnosticMode = it.diagnosticMode,
+                    generationProgress = it.generationProgress,
+                    diagnosticCanceled = it.generating && it.generationProgress != null
                 )
             }
         }

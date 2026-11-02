@@ -22,6 +22,10 @@ import app.finance.android.ai.AiViewModel
 import app.finance.android.ai.ConnectionFailure
 import app.finance.android.ai.ConnectionReportingEngine
 import app.finance.android.ai.ConnectionStage
+import app.finance.android.ai.DiagnosticInferenceEngine
+import app.finance.android.ai.GenerationOptions
+import app.finance.android.ai.GenerationPhase
+import app.finance.android.ai.GenerationProgress
 import app.finance.android.ai.ModelConnection
 import app.finance.data.database.openLedgerStore
 import app.finance.data.repository.LedgerStore
@@ -72,7 +76,7 @@ class AiConnectionUiTest {
         store.close()
         context.deleteDatabase(name)
     }
-    private fun render() {
+    private fun render(experimental: Boolean = false) {
         val owner = object : ViewModelStoreOwner {
             override val viewModelStore = models
         }
@@ -81,7 +85,8 @@ class AiConnectionUiTest {
             override fun <T : ViewModel> create(c: Class<T>): T = AiViewModel(
                 store,
                 engine,
-                (LocalModelRef.create("fixture") as AiResult.Success).value
+                (LocalModelRef.create("fixture") as AiResult.Success).value,
+                experimental = experimental
             ) as T
         }
         compose.runOnUiThread { model = ViewModelProvider(owner, factory)[AiViewModel::class.java] }
@@ -91,6 +96,77 @@ class AiConnectionUiTest {
         compose.waitUntil(5000) {
             compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    @Test fun debugDiagnosticsAreExplicitAndAbsentFromOrdinaryUi() {
+        render(experimental = true)
+        waitTag("ai_model_ready")
+        compose.onNodeWithTag("ai_diagnostic_toggle").assertExists()
+        compose.onNodeWithTag("ai_diagnostic_toggle").performClick()
+        compose.onNodeWithTag("ai_diagnostic_notice")
+            .assertTextContains("10 минут", substring = true)
+        val count =
+            runBlocking { (store.transactions.overview() as LedgerResult.Success).value.count }
+        assertEquals(0L, count)
+    }
+
+    @Test fun ordinaryUiDoesNotOfferDiagnosticMode() {
+        render()
+        waitTag("ai_model_ready")
+        compose.onNodeWithTag("ai_diagnostic_toggle").assertDoesNotExist()
+    }
+
+    @Test fun diagnosticGenerationReportsOnlyMetricsAndIgnoresLateCanceledCallback() {
+        engine.suspendGenerate = true
+        render(experimental = true)
+        waitTag("ai_model_ready")
+        compose.onNodeWithTag("ai_diagnostic_toggle").performClick()
+        compose.runOnUiThread {
+            model.prompt("Synthetic fixture")
+            model.generate()
+        }
+        compose.waitUntil(5000) { engine.generations.get() == 1 }
+        waitTag("ai_diagnostic_phase")
+        compose.onNodeWithTag(
+            "ai_diagnostic_phase"
+        ).assertTextContains("обработка входного", substring = true)
+        compose.onNodeWithTag(
+            "ai_diagnostic_prompt"
+        ).assertTextContains("256 из 900", substring = true)
+        compose.onNodeWithTag("ai_diagnostic_elapsed").assertTextContains("12 с", substring = true)
+        compose.onNodeWithTag(
+            "ai_diagnostic_first"
+        ).assertTextContains("ещё не получен", substring = true)
+        assertEquals(600_000L, engine.options!!.timeoutMs)
+        val oldReport = engine.generationReport!!
+        compose.runOnUiThread { model.cancel() }
+        compose.waitUntil(5000) { !model.state.value.busy }
+        val stopped = model.state.value.generationProgress
+        compose.runOnUiThread {
+            oldReport(GenerationProgress(phase = GenerationPhase.FINISHED, outputTokens = 77))
+        }
+        assertEquals(stopped, model.state.value.generationProgress)
+        assertEquals(true, model.state.value.diagnosticCanceled)
+        assertEquals(false, model.available)
+        assertEquals(
+            0L,
+            runBlocking {
+                (store.transactions.overview() as LedgerResult.Success).value.count
+            }
+        )
+    }
+
+    @Test fun ordinaryGenerationDoesNotRequestExtendedTimeoutOrMetrics() {
+        render(experimental = true)
+        waitTag("ai_model_ready")
+        compose.runOnUiThread {
+            model.prompt("Synthetic fixture")
+            model.generate()
+        }
+        compose.waitUntil(5000) { engine.generations.get() == 1 && !model.state.value.busy }
+        assertEquals(false, engine.options!!.diagnostic)
+        assertEquals(120_000L, engine.options!!.timeoutMs)
+        assertEquals(null, model.state.value.generationProgress)
     }
 
     @Test fun entryAutomaticallyLoadsOnceWithoutGeneratingOrWriting() {
@@ -243,7 +319,9 @@ class AiConnectionUiTest {
         assertEquals(false, model.available)
     }
 
-    private class ProbeEngine : ConnectionReportingEngine {
+    private class ProbeEngine :
+        ConnectionReportingEngine,
+        DiagnosticInferenceEngine {
         val loads = AtomicInteger()
         val unloads = AtomicInteger()
         val generations = AtomicInteger()
@@ -273,7 +351,30 @@ class AiConnectionUiTest {
             loaded = !fail
             return if (fail) AiResult.Failure(AiError.MODEL_UNAVAILABLE) else AiResult.Success(Unit)
         }
-        override suspend fun generate(request: InferenceRequest): AiResult<InferenceText> {
+
+        @Volatile var options: GenerationOptions? = null
+
+        @Volatile var generationReport: ((GenerationProgress) -> Unit)? = null
+        override suspend fun generate(request: InferenceRequest): AiResult<InferenceText> =
+            generate(request, GenerationOptions()) {}
+        override suspend fun generate(
+            request: InferenceRequest,
+            options: GenerationOptions,
+            report: (GenerationProgress) -> Unit
+        ): AiResult<InferenceText> {
+            this.options = options
+            generationReport = report
+            if (options.diagnostic) {
+                report(
+                    GenerationProgress(
+                        GenerationPhase.PREFILL,
+                        promptTokens = 900,
+                        processedTokens = 256,
+                        elapsedMs = 12000,
+                        pssKiB = 4096
+                    )
+                )
+            }
             generations.incrementAndGet()
             if (suspendGenerate) awaitCancellation()
             return InferenceText.create(

@@ -21,7 +21,8 @@ internal class AutoLocalModelEngine(
         String
     ) -> LocalInferenceEngine = { file, system -> NativeInferenceEngine(file, system) },
     private val systemSha256: String = SYSTEM_SHA256
-) : ConnectionReportingEngine {
+) : ConnectionReportingEngine,
+    DiagnosticInferenceEngine {
     private val mutex = Mutex()
 
     @Volatile private var delegate: LocalInferenceEngine? = null
@@ -139,10 +140,21 @@ internal class AutoLocalModelEngine(
             mutex.unlock()
         }
     }
-    override suspend fun generate(request: InferenceRequest): AiResult<InferenceText> {
+    override suspend fun generate(request: InferenceRequest): AiResult<InferenceText> =
+        generate(request, GenerationOptions()) {}
+    override suspend fun generate(
+        request: InferenceRequest,
+        options: GenerationOptions,
+        report: (GenerationProgress) -> Unit
+    ): AiResult<InferenceText> {
         if (!mutex.tryLock()) return AiResult.Failure(AiError.BUSY)
         try {
-            return delegate?.generate(request) ?: AiResult.Failure(AiError.MODEL_UNAVAILABLE)
+            val engine = delegate ?: return AiResult.Failure(AiError.MODEL_UNAVAILABLE)
+            return if (engine is DiagnosticInferenceEngine) {
+                engine.generate(request, options, report)
+            } else {
+                engine.generate(request)
+            }
         } finally {
             mutex.unlock()
         }
