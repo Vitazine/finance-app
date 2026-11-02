@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <provider android:name="app.finance.android.StalledDocumentProvider"
+            android:authorities="app.finance.android.test.stalled" android:exported="true" />
+    </application>
+</manifest>

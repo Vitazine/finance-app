@@ -1,0 +1,25 @@
+{
+  "source_url": "https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xml",
+  "publisher": "SIX, ISO 4217 Maintenance Agency",
+  "publication": "2026-09-17",
+  "retrieved_on": "2026-11-01",
+  "source_sha256": "33139b438657d1cee116ba737807ea71d19d6de4b90f799a09c56f0cc6a1b0ff",
+  "unique_codes": 178,
+  "numeric_minor_unit_codes": 165,
+  "undefined_minor_unit_codes": [
+    "XAG",
+    "XAU",
+    "XBA",
+    "XBB",
+    "XBC",
+    "XBD",
+    "XDR",
+    "XPD",
+    "XPT",
+    "XSU",
+    "XTS",
+    "XUA",
+    "XXX"
+  ],
+  "policy": "Frozen factual code/exponent reference. Undefined scale is rejected, never defaulted. This does not select FX provider/product currency coverage. No automatic runtime update."
+}

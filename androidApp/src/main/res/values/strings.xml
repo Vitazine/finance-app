@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">Finance App</string>
+  <string name="home">Главная</string>
+  <string name="transactions">Операции</string>
+  <string name="analytics">Бюджет</string>
+  <string name="ai">AI</string>
+  <string name="settings">Настройки</string>
+  <string name="home_title">Ваши финансы</string>
+  <string name="transactions_empty">Операций пока нет</string>
+  <string name="analytics_empty">Бюджет ещё не задан</string>
+  <string name="analytics_detail">Здесь появятся расходы за месяц и статистика.</string>
+  <string name="ai_empty">Модель не подключена</string>
+  <string name="ai_detail">Локальный помощник станет доступен после проверки модели на устройстве. Каждая предложенная операция потребует подтверждения.</string>
+  <string name="settings_empty">Хранение на устройстве</string>
+  <string name="open_transactions">Посмотреть операции</string>
+  <string name="foundation_notice">Ранняя версия · базовый каркас</string>
+</resources>

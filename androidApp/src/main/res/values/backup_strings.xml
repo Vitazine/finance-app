@@ -1,0 +1,16 @@
+<resources>
+    <string name="backup_title">Резервная копия</string>
+    <string name="backup_plaintext">JSON и CSV содержат ваши финансовые данные без шифрования. Выбирайте безопасное место хранения. CSV предназначен только для просмотра, не для восстановления.</string>
+    <string name="backup_export">Сохранить JSON</string>
+    <string name="backup_csv">Сохранить CSV</string>
+    <string name="backup_import">Открыть JSON для восстановления</string>
+    <string name="backup_error">Операция не выполнена: %1$s. Выберите файл заново для повторной проверки.</string>
+    <string name="backup_complete">Операция завершена</string>
+    <string name="backup_replace_title">Заменить все данные?</string>
+    <string name="backup_replace_warning">Восстановление полностью заменит текущие операции, категории, бюджет, сохранённые курсы и настройки валюты/зоны. Объединения и пересчёта старых сумм не будет.</string>
+    <string name="backup_counts">В копии: операций %1$d, категорий %2$d</string>
+    <string name="backup_currencies">Валюта сейчас: %1$s · в копии: %2$s</string>
+    <string name="backup_pre_export">Рекомендуем сначала сохранить текущие данные в отдельный JSON. Если данные изменились после проверки файла, потребуется выбрать его заново.</string>
+    <string name="backup_replace_agree">Понимаю, что текущие данные будут заменены</string>
+    <string name="backup_replace">Заменить данные</string>
+</resources>

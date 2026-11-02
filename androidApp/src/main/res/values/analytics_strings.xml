@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="analytics_screen_title">Бюджет и аналитика</string>
+    <string name="spending_title">Расходы за 30 полных дней</string>
+    <string name="spending_period">%1$s — %2$s · %3$s</string>
+    <string name="spending_total">Всего: %1$s</string>
+    <string name="spending_loading">Загрузка аналитики…</string>
+    <string name="spending_error">Аналитика недоступна. Ручной учёт остаётся доступным.</string>
+    <string name="spending_empty">За эти полные дни расходов нет.</string>
+    <string name="spending_today_excluded">Сегодняшний день не входит в эти 30 дней. Доходы не уменьшают расходы.</string>
+    <string name="spending_daily">В среднем за день</string>
+    <string name="spending_weekly">Недельный эквивалент</string>
+    <string name="spending_normalized">Эквивалент за 30 дней: %1$s</string>
+    <string name="spending_month_actual">Факт за %1$s: %2$s</string>
+    <string name="spending_rounded">≈ %1$s</string>
+    <string name="spending_rounding_note">≈ — среднее округлено только для отображения. Эквивалент за 30 дней рассчитан из точной суммы.</string>
+    <string name="spending_chart_description">Расходы по дням: 30 полных дней, %1$s. Всего %2$s. Точные значения доступны в списке дней.</string>
+    <string name="spending_chart_scale">Максимум за день: %1$s</string>
+    <string name="spending_chart_note">Столбцы показаны относительно максимума; точные суммы — в списке.</string>
+    <string name="spending_show_days">Показать значения по дням</string>
+    <string name="spending_hide_days">Скрыть значения по дням</string>
+    <string name="spending_day_value">%1$s · %2$s</string>
+    <string name="spending_categories">По категориям за эти 30 дней</string>
+    <string name="spending_archived">Архивная категория</string>
+    <string name="spending_category_count">Показано категорий: %1$d из %2$d</string>
+    <string name="spending_more_categories">Показать ещё категории</string>
+    <string name="spending_history_scope">Общий график за 30 полных дней скрыт при фильтрации списка. Снимите фильтры, чтобы увидеть его.</string>
+    <string name="spending_show_chart">Показать график за 30 полных дней</string>
+    <string name="spending_hide_chart">Скрыть график</string>
+</resources>

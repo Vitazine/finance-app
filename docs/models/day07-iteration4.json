@@ -1,0 +1,30 @@
+{
+  "id": "day07-iteration4-q4-k-m",
+  "status": "RESEARCH_ONLY_NOT_RELEASE_QUALIFIED",
+  "artifact": {
+    "format": "GGUF",
+    "quantization": "Q4_K_M",
+    "bytes": 2497279040,
+    "sha256": "11bb8bdadec9baf9d0a1a91e0ef312c787cd967f95ac261d82ee283fdf10d699",
+    "seconds": 119.0,
+    "upstream": "060b2fea4ed528810ddc91d48fb22b3e4d63eb85"
+  },
+  "files": {
+    "system.txt": "a9776636b7e4be302ded791753834bd2adc368a87aa1c83bad7eb0587b6ee260",
+    "chat_template.jinja": "64f85b198065d0fba2a81f37e10ed68161ce2c19a754c7100e67e0ca2ee9c326"
+  },
+  "distribution": "No weights, adapter, dataset or private prompt distributed. External model provenance and permission must be verified separately.",
+  "runtime": {
+    "candidate": "llama.cpp",
+    "revision": "060b2fea4ed528810ddc91d48fb22b3e4d63eb85",
+    "license": "MIT",
+    "url": "https://github.com/ggml-org/llama.cpp",
+    "abi": "arm64-v8a",
+    "cpu": "armv8-a",
+    "context": 2048,
+    "threads": 4,
+    "sampling": "greedy",
+    "max_output_tokens": 256,
+    "network": false
+  }
+}

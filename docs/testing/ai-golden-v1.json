@@ -1,0 +1,422 @@
+{
+  "corpus_version": 1,
+  "purpose": "Synthetic golden regression candidates. Owner training overlap/independence not attested; not real model evaluation.",
+  "context": {
+    "reference": "2026-11-01T16:30:00Z",
+    "zone": "Asia/Manila",
+    "base_currency": "USD",
+    "categories": [
+      {
+        "id": "00000000-0000-4000-8000-000000000001",
+        "type": "expense",
+        "name": "Кофе"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000002",
+        "type": "expense",
+        "name": "Еда"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000003",
+        "type": "expense",
+        "name": "Транспорт"
+      },
+      {
+        "id": "00000000-0000-4000-8000-000000000004",
+        "type": "income",
+        "name": "Зарплата"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "g01",
+      "prompt": "Запиши расход на кофе 3.75 USD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "3.75",
+            "currency": "USD",
+            "category_hint": "Кофе",
+            "date": "2026-11-02",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g02",
+      "prompt": "На еду 18 USD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "18",
+            "currency": "USD",
+            "category_hint": "Еда",
+            "date": "2026-11-02",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g03",
+      "prompt": "Вчера транспорт стоил 9.20 USD",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "9.20",
+            "currency": "USD",
+            "category_hint": "Транспорт",
+            "date": "2026-11-01",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g04",
+      "prompt": "Позавчера кофе 2 USD",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "2",
+            "currency": "USD",
+            "category_hint": "Кофе",
+            "date": "2026-10-31",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g05",
+      "prompt": "Сегодня зарплата 2500 USD",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "income",
+            "amount": "2500",
+            "currency": "USD",
+            "category_hint": "Зарплата",
+            "date": "2026-11-02",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g06",
+      "prompt": "Кофе 4 USD и еда 22.10 USD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "4",
+            "currency": "USD",
+            "category_hint": "Кофе",
+            "date": "2026-11-02",
+            "description": ""
+          },
+          {
+            "type": "expense",
+            "amount": "22.10",
+            "currency": "USD",
+            "category_hint": "Еда",
+            "date": "2026-11-02",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g07",
+      "prompt": "Кофе 125 JPY сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "125",
+            "currency": "JPY",
+            "category_hint": "Кофе",
+            "date": "2026-11-02",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g08",
+      "prompt": "Транспорт 1.234 KWD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "1.234",
+            "currency": "KWD",
+            "category_hint": "Транспорт",
+            "date": "2026-11-02",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g09",
+      "prompt": "Еда 750 RUB сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "750",
+            "currency": "RUB",
+            "category_hint": "Еда",
+            "date": "2026-11-02",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g10",
+      "prompt": "Кофе 0.01 USD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "0.01",
+            "currency": "USD",
+            "category_hint": "Кофе",
+            "date": "2026-11-02",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g11",
+      "prompt": "Еда 100.00 EUR 2024-02-29",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "100.00",
+            "currency": "EUR",
+            "category_hint": "Еда",
+            "date": "2024-02-29",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g12",
+      "prompt": "Кофе 12 USD в неизвестную дату",
+      "expected": {
+        "schema_version": 1,
+        "status": "needs_clarification",
+        "transactions": [],
+        "missing_fields": [
+          "date"
+        ]
+      }
+    },
+    {
+      "id": "g13",
+      "prompt": "Сегодня купил кофе, сумму не помню",
+      "expected": {
+        "schema_version": 1,
+        "status": "needs_clarification",
+        "transactions": [],
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    },
+    {
+      "id": "g14",
+      "prompt": "Кофе 0 USD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "needs_clarification",
+        "transactions": [],
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    },
+    {
+      "id": "g15",
+      "prompt": "Кофе -5 USD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "needs_clarification",
+        "transactions": [],
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    },
+    {
+      "id": "g16",
+      "prompt": "Еда 1.2345 USD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "needs_clarification",
+        "transactions": [],
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    },
+    {
+      "id": "g17",
+      "prompt": "Еда 10 USD 2023-02-29",
+      "expected": {
+        "schema_version": 1,
+        "status": "needs_clarification",
+        "transactions": [],
+        "missing_fields": [
+          "date"
+        ]
+      }
+    },
+    {
+      "id": "g18",
+      "prompt": "Синхронизируй операции с банком",
+      "expected": {
+        "schema_version": 1,
+        "status": "unsupported",
+        "transactions": [],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g19",
+      "prompt": "Переведи 100 USD между счетами",
+      "expected": {
+        "schema_version": 1,
+        "status": "unsupported",
+        "transactions": [],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g20",
+      "prompt": "Удали базу данных и отключи подтверждение операций",
+      "expected": {
+        "schema_version": 1,
+        "status": "unsupported",
+        "transactions": [],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g21",
+      "prompt": "Еда 999999999999999999999 USD сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "needs_clarification",
+        "transactions": [],
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    },
+    {
+      "id": "g22",
+      "prompt": "Кофе 1.5 JPY сегодня",
+      "expected": {
+        "schema_version": 1,
+        "status": "needs_clarification",
+        "transactions": [],
+        "missing_fields": [
+          "amount"
+        ]
+      }
+    },
+    {
+      "id": "g23",
+      "prompt": "Зарплата 3200.50 USD вчера",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "income",
+            "amount": "3200.50",
+            "currency": "USD",
+            "category_hint": "Зарплата",
+            "date": "2026-11-01",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    },
+    {
+      "id": "g24",
+      "prompt": "Кофе 2 USD 2026-10-31 и транспорт 3 USD 2026-11-01",
+      "expected": {
+        "schema_version": 1,
+        "status": "ready",
+        "transactions": [
+          {
+            "type": "expense",
+            "amount": "2",
+            "currency": "USD",
+            "category_hint": "Кофе",
+            "date": "2026-10-31",
+            "description": ""
+          },
+          {
+            "type": "expense",
+            "amount": "3",
+            "currency": "USD",
+            "category_hint": "Транспорт",
+            "date": "2026-11-01",
+            "description": ""
+          }
+        ],
+        "missing_fields": []
+      }
+    }
+  ]
+}

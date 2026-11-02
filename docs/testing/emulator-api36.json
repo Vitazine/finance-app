@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "checked_on": "2026-11-01",
+  "avd": "Finance_API_36_8GB",
+  "device_definition": "pixel_6",
+  "guest_api": 36,
+  "guest_abi": "arm64-v8a",
+  "ram_mib": 8192,
+  "vcpus": 4,
+  "display_pixels": [
+    1080,
+    2400
+  ],
+  "density_dpi": 420,
+  "graphics": "host (gfxstream; HVF CPU acceleration)",
+  "google_services": false,
+  "packages": {
+    "emulator": {
+      "revision": "37.2.13",
+      "url": "https://dl.google.com/android/repository/emulator-darwin_x64-16740729.zip",
+      "size_bytes": 488733162,
+      "publisher_sha1": "b0c5fdc92430079436e9aec5983f14a5499de9b0"
+    },
+    "system-images;android-36;default;arm64-v8a": {
+      "revision": "2",
+      "url": "https://dl.google.com/android/repository/sys-img/android/arm64-v8a-36_r02.zip",
+      "size_bytes": 810736863,
+      "publisher_sha1": "62ad6714df790f89c8a8ad32552ffe20bb16fe87"
+    }
+  },
+  "limits": "Development UI evidence only; not physical Pixel or AI hardware qualification.",
+  "archive_hash_limit": "Publisher SHA-1 from official repository XML; installed via SDK Manager, archives not retained for separate checksum.",
+  "initial_renderer_issue": "Software renderer reproduced System UI failed-to-complete-startup ANR on two cold boots. Host GPU passed two cold boots, 4 instrumentation tests and the complete UI smoke run."
+}

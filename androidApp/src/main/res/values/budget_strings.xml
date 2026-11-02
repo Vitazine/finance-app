@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="budget_title">Месячный бюджет</string>
+    <string name="budget_month">%1$s · %2$s</string>
+    <string name="budget_actual">Расходы месяца: %1$s</string>
+    <string name="budget_limit">Лимит: %1$s</string>
+    <string name="budget_remaining">Осталось: %1$s</string>
+    <string name="budget_overrun">Перерасход: %1$s</string>
+    <string name="budget_edit">Задать или изменить лимит</string>
+    <string name="budget_amount">Лимит на этот месяц, %1$s</string>
+    <string name="budget_rule">Только расходы по сохранённым курсам. Доходы не уменьшают расход. Остаток на следующий месяц не переносится.</string>
+    <string name="budget_invalid">Введите положительный лимит с точностью валюты.</string>
+    <string name="budget_month_changed">Месяц изменился. Проверьте новый период и задайте лимит заново.</string>
+    <string name="budget_loading">Загрузка бюджета…</string>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="fx_local">Сохранённые курсы доступны без сети.</string>
+  <string name="fx_find">Найти сохранённый</string>
+  <string name="fx_remember">Запомнить курс</string>
+  <string name="fx_use">Использовать курс</string>
+  <string name="fx_source_manual">Ручной курс</string>
+  <string name="fx_applied">Выбран курс от %1$s · %2$s</string>
+  <string name="fx_saved">Курс сохранён отдельно от операции.</string>
+  <string name="fx_empty">Сохранённого курса на это время нет. Введите курс вручную.</string>
+  <string name="fx_problem">Сохранённые курсы недоступны. Можно указать курс вручную.</string>
+  <string name="fx_conflict">Сохранён более новый курс. Ваш ручной ввод остался в форме.</string>
+  <string name="fx_found">Найден сохранённый курс</string>
+  <string name="fx_pair_rate">1 %1$s = %2$s %3$s</string>
+  <string name="fx_source">Источник: %1$s</string>
+  <string name="fx_date">Дата курса: %1$s</string>
+  <string name="fx_retrieved">Сохранён на устройстве: %1$s</string>
+  <string name="fx_future">Дата курса ещё не наступила.</string>
+  <string name="fx_age_recent">Давность: менее часа.</string>
+  <string name="fx_age_hours">Давность: %1$d ч.</string>
+</resources>
