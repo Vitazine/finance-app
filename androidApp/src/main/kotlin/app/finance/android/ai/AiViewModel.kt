@@ -105,6 +105,7 @@ internal class AiViewModel(
                 busy = true,
                 connecting = true,
                 connected = false,
+                error = null,
                 connectionError = null,
                 connectionStatus = ModelConnection()
             )
@@ -323,7 +324,7 @@ internal class AiViewModel(
                         }
                         when (output) {
                             is AiResult.Failure -> {
-                                releaseRuntime = true
+                                releaseRuntime = output.error.requiresModelReload()
                                 releaseError = output.error
                                 publishError(token, output.error)
                             }

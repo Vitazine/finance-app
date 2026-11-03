@@ -103,3 +103,15 @@ elapsed time to a Material3 linear indicator. Only completed input decode batche
 have a known denominator; answer generation is indeterminate. Token cap is never
 presented as total answer length or overall completion. PSS and the600-second
 deadline remain diagnostic-only. The ordinary deadline is still120seconds.
+
+## 7. Rejected answer versus connection failure
+
+A malformed/schema/domain-invalid response is a rejected answer, not a failed
+model load. Keep the verified runtime available for an explicit new request;
+never salvage partial JSON or create ledger entries from rejected output. The
+UI distinguishes invalid amount/currency/date, context/output limits and native
+failure. Debug builds expose only the bounded error enum, without raw output.
+Model unavailable, OOM, timeout and native engine failure still unload and require
+explicit reconnection. Editing a failed request must not reclassify the original
+generation failure as a load failure. Actual file/hash/load errors retain their
+connection-stage messages. Reconnection clears the previous generation error.

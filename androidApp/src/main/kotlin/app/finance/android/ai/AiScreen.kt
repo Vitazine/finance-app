@@ -90,6 +90,13 @@ import app.finance.android.ledger.message
                 stringResource(R.string.ai_connected),
                 Modifier.testTag("ai_model_ready")
             )
+            // A failed load records a connection-stage failure. Generation cleanup only
+            // blocks auto-reconnect; editing the prompt may already have cleared s.error.
+            s.error != null ||
+                (s.connectionError != null && s.connectionStatus.failure == null) -> Text(
+                stringResource(R.string.ai_generation_stopped),
+                Modifier.testTag("ai_model_stopped")
+            )
             s.connectionError != null -> ErrorText(
                 stringResource(
                     connectionMessage(
@@ -103,6 +110,27 @@ import app.finance.android.ledger.message
                 stringResource(R.string.ai_connect_idle),
                 Modifier.testTag("ai_model_idle")
             )
+        }
+        s.error?.let {
+            ErrorText(
+                stringResource(
+                    generationMessage(it)
+                ),
+                "ai_error"
+            )
+            if (model.experimental) {
+                Text(
+                    stringResource(R.string.ai_generation_error_code, it.name),
+                    style = MaterialTheme.typography.bodySmall,
+                    modifier = Modifier.testTag("ai_generation_error_code")
+                )
+                if (it == AiError.TIMEOUT && !s.diagnosticMode) {
+                    Text(
+                        stringResource(R.string.ai_timeout_diagnostic_hint),
+                        modifier = Modifier.testTag("ai_timeout_hint")
+                    )
+                }
+            }
         }
         if (!s.connected &&
             !s.busy
@@ -149,21 +177,6 @@ import app.finance.android.ledger.message
             ) {
                 Text(stringResource(R.string.ai_generate))
             }
-        }
-        s.error?.let {
-            ErrorText(
-                stringResource(
-                    when (it) {
-                        AiError.INVALID_CONTEXT -> R.string.ai_setup_required
-                        AiError.MODEL_UNAVAILABLE -> R.string.ai_empty
-                        AiError.OUT_OF_MEMORY -> R.string.ai_memory_error
-                        AiError.TIMEOUT -> R.string.ai_timeout_error
-                        AiError.INVALID_REQUEST, AiError.INPUT_TOO_LONG -> R.string.ai_request_error
-                        else -> R.string.ai_parse_error
-                    }
-                ),
-                "ai_error"
-            )
         }
         if (s.clarification) Text(stringResource(R.string.ai_clarification))
         if (s.unsupported) Text(stringResource(R.string.ai_unsupported))

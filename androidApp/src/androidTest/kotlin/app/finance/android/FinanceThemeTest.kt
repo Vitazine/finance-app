@@ -52,6 +52,7 @@ class FinanceThemeTest {
                     colors.surface to colors.onSurface,
                     colors.surface to colors.onSurfaceVariant,
                     colors.surfaceContainer to colors.onSurface,
+                    colors.surfaceContainerLow to colors.onSurface,
                     colors.error to colors.onError,
                     colors.errorContainer to colors.onErrorContainer
                 )

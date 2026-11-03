@@ -43,14 +43,14 @@ class DiagnosticInferenceRuntimeTest {
         val settings = (LedgerSettings.create(usd, "UTC") as LedgerResult.Success).value
         val aiContext = (
             AiContext.create(
-                Instant.parse("2026-11-02T12:00:00Z"),
+                Instant.parse(args.getString("referenceInstant") ?: "2026-11-02T12:00:00Z"),
                 settings,
                 emptyList()
             ) as AiResult.Success
             ).value
         val request = (
             InferenceRequest.create(
-                "Купил шаурму за 250 RUB 2026-11-02",
+                args.getString("syntheticInput") ?: "Купил шаурму за 250 RUB 2026-11-02",
                 aiContext,
                 256
             ) as AiResult.Success

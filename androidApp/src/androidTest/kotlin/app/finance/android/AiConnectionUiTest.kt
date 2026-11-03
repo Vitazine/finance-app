@@ -241,6 +241,89 @@ class AiConnectionUiTest {
         )
     }
 
+    @Test fun rejectedModelOutputKeepsConnectionAndAllowsExplicitRetryWithoutWrites() {
+        render(experimental = true)
+        waitTag("ai_model_ready")
+        for (reason in listOf(
+            AiError.INVALID_AMOUNT,
+            AiError.INVALID_DATE,
+            AiError.INVALID_CURRENCY,
+            AiError.INVALID_JSON,
+            AiError.INVALID_SCHEMA,
+            AiError.OUTPUT_TOO_LONG
+        )) {
+            engine.generationError = reason
+            compose.runOnUiThread {
+                model.prompt("Synthetic fixture")
+                model.generate()
+            }
+            compose.waitUntil(5000) { !model.state.value.busy && model.state.value.error == reason }
+            compose.onNodeWithTag("ai_model_error").assertDoesNotExist()
+            compose.onNodeWithTag("ai_error").assertExists()
+            org.junit.Assert.assertTrue(
+                "A rejected answer must not unload the model",
+                model.available
+            )
+            assertEquals(0, engine.unloads.get())
+        }
+        engine.generationError = null
+        compose.runOnUiThread { model.generate() }
+        compose.waitUntil(5000) { !model.state.value.busy && model.state.value.unsupported }
+        assertEquals(1, engine.loads.get())
+        assertEquals(
+            0L,
+            runBlocking {
+                (store.transactions.overview() as LedgerResult.Success).value.count
+            }
+        )
+    }
+
+    @Test fun generationEngineFailureIsNotPresentedAsFailedConnectionAndRetryCanRecover() {
+        engine.generationError = AiError.ENGINE_FAILURE
+        render(experimental = true)
+        waitTag("ai_model_ready")
+        compose.runOnUiThread {
+            model.prompt("Synthetic fixture")
+            model.generate()
+        }
+        compose.waitUntil(5000) { !model.state.value.busy && model.state.value.error != null }
+        compose.onNodeWithTag("ai_model_error").assertDoesNotExist()
+        compose.onNodeWithTag("ai_error").assertTextContains("подготовки ответа", substring = true)
+        assertEquals(false, model.available)
+        assertEquals(1, engine.loads.get())
+        compose.runOnUiThread { model.prompt("Another synthetic fixture") }
+        compose.onNodeWithTag("ai_model_error").assertDoesNotExist()
+        engine.generationError = null
+        compose.onNodeWithTag("ai_connect_retry").performClick()
+        waitTag("ai_model_ready")
+        compose.onNodeWithTag("ai_error").assertDoesNotExist()
+        assertEquals(2, engine.loads.get())
+        assertEquals(
+            0L,
+            runBlocking {
+                (store.transactions.overview() as LedgerResult.Success).value.count
+            }
+        )
+    }
+
+    @Test fun ordinaryTimeoutExplainsExplicitDiagnosticOptionWithoutChangingDeadline() {
+        engine.generationError = AiError.TIMEOUT
+        render(experimental = true)
+        waitTag("ai_model_ready")
+        compose.runOnUiThread {
+            model.prompt("Synthetic fixture")
+            model.generate()
+        }
+        compose.waitUntil(5000) {
+            !model.state.value.busy &&
+                model.state.value.error == AiError.TIMEOUT
+        }
+        compose.onNodeWithTag("ai_model_error").assertDoesNotExist()
+        compose.onNodeWithTag("ai_timeout_hint").assertTextContains("10 минут", substring = true)
+        assertEquals(false, model.state.value.diagnosticMode)
+        assertEquals(120_000L, engine.options!!.timeoutMs)
+    }
+
     @Test fun entryAutomaticallyLoadsOnceWithoutGeneratingOrWriting() {
         render()
         waitTag("ai_model_ready")
@@ -424,6 +507,8 @@ class AiConnectionUiTest {
             return if (fail) AiResult.Failure(AiError.MODEL_UNAVAILABLE) else AiResult.Success(Unit)
         }
 
+        @Volatile var generationError: AiError? = null
+
         @Volatile var options: GenerationOptions? = null
 
         @Volatile var generationReport: ((GenerationProgress) -> Unit)? = null
@@ -449,6 +534,7 @@ class AiConnectionUiTest {
             }
             generations.incrementAndGet()
             if (suspendGenerate) awaitCancellation()
+            generationError?.let { return AiResult.Failure(it) }
             return InferenceText.create(
                 """{"schema_version":1,"status":"unsupported","transactions":[],"missing_fields":[]}"""
             )

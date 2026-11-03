@@ -40,6 +40,10 @@ Every requirement maps to automated checks when practical; do not equate a green
   wrong hashes; real-model opt-in tests remain separate from deterministic UI tests.
 - Brand color #B22222, text contrast in both themes, system bars following the
   selected app theme, retained navigation/IME/font scaling behavior.
+- Rejected native model output keeps a loaded runtime usable; fatal generation
+  failure, prompt editing and explicit reconnect must preserve the correct error
+  context. Parameterized synthetic real-model UI checks use their own DB and clock;
+  supplied text/output is neither logged nor captured in screenshots.
 
 ## 4. Acceptance matrix
 
