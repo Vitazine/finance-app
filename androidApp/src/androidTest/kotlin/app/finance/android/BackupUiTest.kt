@@ -52,6 +52,7 @@ class BackupUiTest {
     private lateinit var ledger: LedgerViewModel
     private val models = ViewModelStore()
     private lateinit var fixture: File
+    private var beforeReplace: suspend () -> Unit = {}
     private fun id(n: Int) = (
         LedgerId.parse(
             "00000000-0000-4000-8000-" + n.toString().padStart(12, '0')
@@ -103,7 +104,8 @@ class BackupUiTest {
                 else -> BackupViewModel(
                     store.backups,
                     ledger::lockForImport,
-                    ledger::importFinished
+                    ledger::importFinished,
+                    beforeReplace = { beforeReplace() }
                 )
             } as T
         }
@@ -140,6 +142,18 @@ class BackupUiTest {
     }
     private fun count() = runBlocking {
         (store.transactions.overview() as LedgerResult.Success).value.count
+    }
+
+    @Test fun catalogMarkerFailureAbortsReplacementAndLeavesLedgerAvailable() {
+        beforeReplace = { error("Synthetic catalog marker failure") }
+        preview()
+        compose.onNodeWithTag("backup_replace_check").performScrollTo().performClick()
+        compose.onNodeWithTag("backup_replace_confirm").performClick()
+        compose.waitUntil(15000) { backup.state.value.error != null && !ledger.state.value.busy }
+        assertEquals(1L, count())
+        assertTrue(!backup.state.value.completed)
+        compose.onNodeWithTag("nav_HOME").performClick()
+        compose.onNodeWithTag("home_balance").assertIsDisplayed()
     }
 
     @Test fun previewAndCancelNeverReplaceUntilExplicitCheckboxAndConfirm() {

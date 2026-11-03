@@ -33,7 +33,8 @@ internal data class BackupState(
 internal class BackupViewModel(
     private val repository: BackupRepository,
     private val acquire: () -> Boolean,
-    private val release: (Boolean) -> Unit
+    private val release: (Boolean) -> Unit,
+    private val beforeReplace: suspend () -> Unit = {}
 ) : ViewModel() {
     private val mutable = MutableStateFlow(BackupState())
     val state = mutable.asStateFlow()
@@ -119,7 +120,12 @@ internal class BackupViewModel(
         operation = viewModelScope.launch {
             var replaced = false
             try {
-                when (val result = withContext(Dispatchers.IO) { repository.replace(preview) }) {
+                when (
+                    val result = withContext(Dispatchers.IO) {
+                        beforeReplace()
+                        repository.replace(preview)
+                    }
+                ) {
                     is BackupResult.Success -> {
                         replaced = true
                         mutable.value =

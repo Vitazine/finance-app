@@ -203,7 +203,7 @@ class BudgetUiTest {
         compose.waitUntil(15000) {
             compose.onAllNodesWithTag("budget_month").fetchSemanticsNodes().any {
                 it.config[androidx.compose.ui.semantics.SemanticsProperties.Text].any { text ->
-                    text.text.contains("2026-12")
+                    text.text.contains("декабрь 2026")
                 }
             }
         }

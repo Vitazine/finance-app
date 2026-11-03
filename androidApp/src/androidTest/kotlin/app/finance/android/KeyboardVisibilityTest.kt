@@ -9,7 +9,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsProperties
-import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -248,10 +247,11 @@ class KeyboardVisibilityTest {
         assertVisible("ai_prompt")
     }
 
-    @Test fun setupZoneRemainsVisibleWhenKeyboardOpens() {
+    @Test fun setupCurrencyRemainsVisibleWithoutTimeZoneInput() {
         render(initialized = false)
-        openKeyboard("setup_zone")
-        assertVisible("setup_zone")
+        openKeyboard("setup_currency")
+        assertVisible("setup_currency")
+        compose.onNodeWithTag("setup_zone").assertDoesNotExist()
     }
     private fun verifyFields(tags: List<String>) {
         tags.forEach { tag ->
@@ -281,14 +281,16 @@ class KeyboardVisibilityTest {
         }
     }
 
-    @Test fun setupNextActionKeepsTheFollowingFieldVisible() {
+    @Test fun setupDoneDismissesKeyboardAndKeepsStartActionAvailable() {
         render(initialized = false)
         openKeyboard("setup_currency")
         assertVisible("setup_currency")
         compose.onNodeWithTag("setup_currency").performImeAction()
-        waitForKeyboard()
-        compose.onNodeWithTag("setup_zone").assertIsFocused()
-        assertVisible("setup_zone")
+        compose.waitUntil(10000) {
+            keyboardInsets()?.isVisible(WindowInsetsCompat.Type.ime()) == false
+        }
+        compose.onNodeWithTag("setup_zone").assertDoesNotExist()
+        assertVisible("setup_save")
         assertZeroWrites()
     }
 
@@ -351,8 +353,6 @@ class KeyboardVisibilityTest {
                 "ai_amount_0",
                 "ai_currency_0",
                 "ai_time_0",
-                "ai_zone_0",
-                "ai_offset_0",
                 "ai_rate_0",
                 "ai_note_0"
             )

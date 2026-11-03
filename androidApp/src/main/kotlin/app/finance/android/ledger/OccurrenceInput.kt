@@ -3,8 +3,6 @@ package app.finance.android.ledger
 import app.finance.domain.ledger.LedgerFilter
 import app.finance.domain.ledger.LedgerResult
 import java.time.DateTimeException
-import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.ZoneId
 import kotlinx.datetime.Instant
 
@@ -20,7 +18,7 @@ internal fun parseOccurrence(
         return InputResult.Failure(InputIssue.INVALID_TIME)
     }
     return try {
-        val local = LocalDateTime.parse(text)
+        val local = parseLocalTime(text)
         val offsets = ZoneId.of(zone).rules.getValidOffsets(local)
         if (offsets.isEmpty()) return InputResult.Failure(InputIssue.TIME_GAP)
         if (offsets.size > 1 &&
@@ -42,8 +40,8 @@ internal fun parseDateRange(
     through: String,
     zone: String
 ): InputResult<LedgerFilter> {
-    if (from.length > 10 ||
-        through.length > 10 ||
+    if (from.length > 40 ||
+        through.length > 40 ||
         zone.length > 128
     ) {
         return InputResult.Failure(InputIssue.INVALID_FILTER)
@@ -52,10 +50,10 @@ internal fun parseDateRange(
         val selectedZone = ZoneId.of(zone)
         val first = from.takeIf {
             it.isNotEmpty()
-        }?.let { LocalDate.parse(it).atStartOfDay(selectedZone).toInstant() }
+        }?.let { parseLocalDate(it).atStartOfDay(selectedZone).toInstant() }
         val next = through.takeIf {
             it.isNotEmpty()
-        }?.let { LocalDate.parse(it).plusDays(1).atStartOfDay(selectedZone).toInstant() }
+        }?.let { parseLocalDate(it).plusDays(1).atStartOfDay(selectedZone).toInstant() }
         val result = LedgerFilter.create(
             from = first?.let { Instant.fromEpochSeconds(it.epochSecond, it.nano) },
             untilExclusive = next?.let { Instant.fromEpochSeconds(it.epochSecond, it.nano) }

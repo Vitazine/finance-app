@@ -17,6 +17,38 @@ import kotlin.test.assertTrue
 class AiDraftParserTest {
     private val parser = AiDraftParser()
     private fun parse(raw: String) = parser.parse(raw, context(), id(99))
+
+    @Test fun modelCategoryCodesSelectTheirRussianCategoriesWithoutGuessingFromDescription() {
+        val cats = listOf(category(1, "Кафе и рестораны"), category(2, "Продукты"))
+        val result = assertIs<AiResult.Success<AiDraft>>(
+            parser.parse(
+                ready(
+                    transaction(hint = "cafes", description = "Synthetic cafe purchase"),
+                    transaction(hint = "GROCERIES", description = "Synthetic groceries")
+                ),
+                context(cats),
+                id(99)
+            )
+        ).value
+        assertEquals(listOf(id(1), id(2)), result.proposals.map { it.categoryId })
+        assertTrue(result.proposals.all { it.issues.isEmpty() })
+    }
+
+    @Test fun categoryAliasesCannotSelectArchivedWrongTypeOrAmbiguousCategories() {
+        val cases = listOf(
+            listOf(category(1, "Кафе и рестораны", archived = true)),
+            listOf(category(1, "Кафе и рестораны", type = EntryType.INCOME)),
+            listOf(category(1, "Кафе и рестораны"), category(2, "кафе и рестораны")),
+            listOf(category(1, "Кафе и рестораны"), category(2, "cafes"))
+        )
+        for (cats in cases) {
+            val d = assertIs<AiResult.Success<AiDraft>>(
+                parser.parse(ready(transaction(hint = "cafes")), context(cats), id(99))
+            ).value
+            assertNull(d.proposals.single().categoryId)
+            assertEquals(DraftStatus.NEEDS_CLARIFICATION, d.status)
+        }
+    }
     private fun success(raw: String): AiDraft =
         assertIs<AiResult.Success<AiDraft>>(parse(raw)).value
     private fun failure(raw: String, error: AiError? = null) {

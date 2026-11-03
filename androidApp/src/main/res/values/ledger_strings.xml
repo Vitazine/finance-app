@@ -2,11 +2,9 @@
     <string name="ledger_loading">Загрузка данных…</string>
     <string name="ledger_retry">Повторить</string>
     <string name="ledger_setup_title">Начните локальный учёт</string>
-    <string name="ledger_setup_detail">Выберите валюту для общего баланса и часовой пояс для дат.</string>
+    <string name="ledger_setup_detail">Выберите валюту для общего баланса. Часовой пояс устройства сохранится автоматически для дат и расчётов.</string>
     <string name="ledger_currency">Базовая валюта</string>
     <string name="ledger_iso_hint">Код ISO: например RUB или USD</string>
-    <string name="ledger_zone">Часовой пояс</string>
-    <string name="ledger_zone_hint">Например Asia/Manila или Europe/Moscow</string>
     <string name="ledger_start">Создать учёт</string>
     <string name="ledger_existing_basis">Валюта существующих операций: %1$s</string>
     <string name="ledger_balance">Виртуальный баланс</string>
@@ -32,8 +30,13 @@
     <string name="ledger_rename">Переименовать</string>
     <string name="ledger_more_categories">Ещё категории</string>
     <string name="ledger_local_time">Дата и время</string>
-    <string name="ledger_local_time_hint">ГГГГ-ММ-ДДTЧЧ:ММ · %1$s</string>
-    <string name="ledger_choose_offset">Это время встречается дважды. Выберите смещение UTC.</string>
+    <string name="ledger_local_time_hint">Например: 22:15 2 ноября 2026</string>
+    <string name="ledger_choose_offset">При переводе часов это время встречается дважды. Выберите нужное вхождение.</string>
+    <string name="ledger_first_occurrence">Первое вхождение</string>
+    <string name="ledger_second_occurrence">Второе вхождение</string>
+    <string name="ledger_pick_date_time">Выбрать дату и время</string>
+    <string name="ledger_calendar_fallback">Эту дату нельзя показать в календаре. Показана текущая дата; введённое значение изменится только после применения.</string>
+    <string name="ledger_next">Далее</string>
     <string name="ledger_rate">Курс: 1 %1$s = … %2$s</string>
     <string name="ledger_rate_hint">Укажите курс вручную или выберите сохранённый ниже</string>
     <string name="ledger_applied_rate">Курс исходной операции: %1$s · %2$s</string>
@@ -51,8 +54,8 @@
     <string name="ledger_filters_all">Все</string>
     <string name="ledger_filter_category_all">Все категории</string>
     <string name="ledger_filter_currency">Исходная валюта · необязательно</string>
-    <string name="ledger_filter_from">С даты · ГГГГ-ММ-ДД</string>
-    <string name="ledger_filter_through">По дату включительно · ГГГГ-ММ-ДД</string>
+    <string name="ledger_filter_from">С даты · например, 2 ноября 2026</string>
+    <string name="ledger_filter_through">По дату включительно · например, 2 ноября 2026</string>
     <string name="ledger_apply">Применить</string>
     <string name="ledger_reset">Сбросить</string>
     <string name="ledger_more_history">Ещё операции</string>

@@ -49,7 +49,8 @@ internal fun LedgerField(
     hint: String? = null,
     decimal: Boolean = false,
     multiline: Boolean = false,
-    readOnly: Boolean = false
+    readOnly: Boolean = false,
+    imeAction: ImeAction? = null
 ) {
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val compact = keyboardOpen &&
@@ -68,7 +69,7 @@ internal fun LedgerField(
         },
         keyboardOptions = KeyboardOptions(
             keyboardType = if (decimal) KeyboardType.Decimal else KeyboardType.Text,
-            imeAction = if (multiline) ImeAction.Default else ImeAction.Next
+            imeAction = imeAction ?: if (multiline) ImeAction.Default else ImeAction.Next
         )
     )
 }

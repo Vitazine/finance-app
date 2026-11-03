@@ -51,6 +51,14 @@ Statuses: `ready`, `needs_clarification`, `unsupported`. `transactions` is bound
 
 Strict pipeline: user text → local inference → extract strictly validated JSON → map known categories → calculate rates through deterministic domain → present editable preview → explicit user confirmation → idempotent DB transaction. Reject malformed schema, hallucinated fields, missing amount, inappropriate category, invalid currency/date, multiple drafts beyond bound and impossible rate. Manual entry always available.
 
+Starter category mapping accepts the model's known expense codes (`cafes`,
+`groceries`, etc.) and their Russian catalog names, case-insensitively. Exact custom
+names remain supported. Only one active category of the proposal's type may match;
+duplicates, archived, unknown or wrong-type categories require manual selection.
+The mapping creates no categories or ledger records. Date-only output still requires
+an explicit time; the UI offers readable input and a date/time picker without zone
+or raw offset entry. This mapping does not establish real-model accuracy or latency.
+
 ## 4. Evaluation
 
 Build a versioned held-out golden dataset with expected normalized draft fields and negative/ambiguous examples. Score field-level accuracy for `type`, `amount`, `currency`, `category`, `date`, transaction count and ability to abstain. Separately track schema compliance, false positive commits (must always be zero by design), latency p50/p95, peak memory, crash/OOM, thermal stability.

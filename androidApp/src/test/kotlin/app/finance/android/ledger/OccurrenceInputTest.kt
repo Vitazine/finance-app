@@ -2,11 +2,40 @@ package app.finance.android.ledger
 
 import kotlinx.datetime.Instant
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class OccurrenceInputTest {
     private fun <T> InputResult<T>.value() = (this as InputResult.Success).value
     private fun InputResult<*>.issue() = (this as InputResult.Failure).issue
+
+    @Test fun humanDateUsesRussianMonthWithoutExposingZoneOrOffset() {
+        assertEquals(
+            "22:15 2 ноября 2026",
+            displayRateTime(Instant.parse("2026-11-02T14:15:03.123456789Z"), "Asia/Manila")
+        )
+    }
+
+    @Test fun humanInputResolvesTheSameInstantAsIsoWithoutChangingZone() {
+        val parsed = parseOccurrence("22:15 2 ноября 2026", "Asia/Manila")
+        assertTrue("Human-readable date must be accepted", parsed is InputResult.Success)
+        assertEquals(
+            Instant.parse("2026-11-02T14:15:00Z"),
+            parsed.value()
+        )
+        assertEquals(
+            InputIssue.INVALID_TIME,
+            parseOccurrence("22:15 29 февраля 2026", "UTC").issue()
+        )
+        assertEquals(
+            InputIssue.TIME_GAP,
+            parseOccurrence("02:30 29 марта 2026", "Europe/Berlin").issue()
+        )
+        assertEquals(
+            InputIssue.TIME_AMBIGUOUS,
+            parseOccurrence("02:30 25 октября 2026", "Europe/Berlin").issue()
+        )
+    }
 
     @Test
     fun occurrenceKeepsNanosecondsAndExplicitZone() {

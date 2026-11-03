@@ -26,7 +26,9 @@ class MainActivity : ComponentActivity() {
                     store.transactions,
                     store.rates,
                     store.budgets,
-                    store.analytics
+                    store.analytics,
+                    prepareCategories =
+                    (this@MainActivity.application as FinanceApplication).categoryBootstrap::ensure
                 )
             }
         }
@@ -70,6 +72,10 @@ class MainActivity : ComponentActivity() {
                     { replaced ->
                         if (replaced) draft.cancel()
                         ledger.importFinished(replaced)
+                    },
+                    beforeReplace = {
+                        (this@MainActivity.application as FinanceApplication)
+                            .categoryBootstrap.preserveImportedCatalog()
                     }
                 )
             }

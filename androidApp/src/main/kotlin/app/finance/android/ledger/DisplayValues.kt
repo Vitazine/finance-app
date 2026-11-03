@@ -47,9 +47,7 @@ internal fun fieldsFor(entry: ManualEntry): EntryFields {
 }
 internal fun displayTime(entry: ManualEntry): String = try {
     val local = zoned(entry.occurredAt, entry.displayZoneId)
-    "${local.format(
-        java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm")
-    )} ${local.offset.id} · ${entry.displayZoneId}"
+    displayLocalTime(local.toLocalDateTime().toString())
 } catch (_: DateTimeException) {
     "${entry.occurredAt} · ${entry.displayZoneId}"
 }
@@ -61,9 +59,7 @@ internal fun filterDate(instant: Instant?, zone: String, exclusiveEnd: Boolean =
 }
 
 internal fun displayRateTime(instant: Instant, zone: String): String = try {
-    val local = zoned(instant, zone)
-    local.format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss")) +
-        " " + local.offset.id + " · " + zone
+    displayLocalTime(zoned(instant, zone).toLocalDateTime().toString())
 } catch (_: DateTimeException) {
     instant.toString() + " · " + zone
 }

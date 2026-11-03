@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -163,7 +162,7 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
                     stringResource(
                         R.string.ledger_applied_rate,
                         quote.rateDecimal,
-                        quote.effectiveAt.toString()
+                        displayRateTime(quote.effectiveAt, fields.zoneId)
                     ),
                     style = MaterialTheme.typography.bodySmall
                 )
@@ -174,29 +173,11 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
         ) {
             RatePanel(state, model)
         }
-        LedgerField(
-            fields.localTime,
-            stringResource(
-                R.string.ledger_local_time
-            ),
-            "editor_time",
-            64,
-            !state.busy,
-            { text ->
-                model.fields { it.withLocalTime(text) }
-            },
-            stringResource(R.string.ledger_local_time_hint, fields.zoneId)
-        )
-        val time = parseOccurrence(fields.localTime, fields.zoneId)
-        if (time is InputResult.Failure && time.issue == InputIssue.TIME_AMBIGUOUS) {
-            Text(stringResource(R.string.ledger_choose_offset))
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                time.offsets.forEach { offset ->
-                    FilterChip(selected = fields.offset == offset, onClick = {
-                        model.fields { it.copy(offset = offset) }
-                    }, enabled = !state.busy, label = { Text(offset) })
-                }
-            }
+        EntryDateTimeField(fields.localTime, "editor_time", !state.busy) { text ->
+            model.fields { it.withLocalTime(text) }
+        }
+        OccurrenceChoices(fields, "editor_time", !state.busy) { offset ->
+            model.fields { it.copy(offset = offset) }
         }
         LedgerField(
             fields.note,

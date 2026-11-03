@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextReplacement
@@ -162,6 +163,44 @@ class AiConfirmationUiTest {
     }
     private fun count() = runBlocking {
         (store.transactions.overview() as LedgerResult.Success).value.count
+    }
+
+    @Test fun previewHasNoEditableTimeZoneOrUtcOffset() {
+        render()
+        text("ai_prompt", "Synthetic purchase")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        compose.onNodeWithTag("ai_zone_0").assertDoesNotExist()
+        compose.onNodeWithTag("ai_offset_0").assertDoesNotExist()
+        assertEquals(0L, count())
+    }
+
+    @Test fun previewDateIsReadableAndDoesNotInventTimeOfDay() {
+        render()
+        text("ai_prompt", "Synthetic purchase")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        compose.onNodeWithTag("ai_time_0").assertTextContains("2 ноября 2026")
+        click("ai_confirm_0")
+        waitTag("ai_input_error_0")
+        assertEquals(0L, count())
+    }
+
+    @Test fun categoryFromModelIsSelectedAutomaticallyAndRemainsEditableWithoutPosting() {
+        runBlocking { app.finance.domain.ledger.DefaultCategories.install(store.categories) }
+        render(raw.replace("Fixture", "cafes"))
+        text("ai_prompt", "Synthetic cafe purchase")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        compose.onNodeWithTag("ai_category_0").assertTextContains("Кафе и рестораны")
+        compose.onNodeWithTag("ai_time_0").performScrollTo()
+        saveProof("ai-readable-preview")
+        assertEquals(0L, count())
+        click("ai_category_0")
+        compose.onNodeWithText("Fixture").performClick()
+        compose.onNodeWithTag("ai_category_0").assertTextContains("Fixture")
+        click("ai_discard")
+        assertEquals(0L, count())
     }
 
     @Test fun generateEditAndExplicitConfirmAreSeparateAndDoubleConfirmCannotDuplicate() {

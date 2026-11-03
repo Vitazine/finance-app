@@ -42,7 +42,8 @@ internal class LedgerViewModel(
     private val rateCache: RateCache,
     private val budgetRepository: app.finance.domain.budget.BudgetRepository,
     private val analyticsRepository: app.finance.domain.analytics.AnalyticsRepository,
-    private val clock: Clock = Clock.System
+    private val clock: Clock = Clock.System,
+    private val prepareCategories: suspend () -> LedgerResult<Unit> = { LedgerResult.Success(Unit) }
 ) : ViewModel() {
     private val mutable = MutableStateFlow(LedgerUiState())
     val state = mutable.asStateFlow()
@@ -264,7 +265,9 @@ internal class LedgerViewModel(
             )
         }
         val reference = loadCurrentAnalytics(clock.now()) ?: return
+        val prepared = prepareCategories()
         loadCategories(reset = true)
+        if (prepared is LedgerResult.Failure) mutable.update { it.copy(error = prepared.error) }
         when (val result = transactionRepository.overview()) {
             is LedgerResult.Success -> mutable.update {
                 it.copy(overview = result.value, overviewError = null)

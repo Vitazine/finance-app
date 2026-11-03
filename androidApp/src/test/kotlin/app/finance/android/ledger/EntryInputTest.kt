@@ -27,6 +27,20 @@ class EntryInputTest {
     private fun build(fields: EntryFields, existing: StoredTransaction? = null) =
         buildEntry(fields, settings, existing, id, at)
 
+    @Test fun readableDisplayAndNoteOnlyEditPreserveOriginalNanosecondInstant() {
+        val original = build(fields().copy(localTime = "2026-11-02T22:15:03.123456789")).value()
+        assertEquals("22:15 2 ноября 2026", displayTime(original))
+        val edited = fieldsFor(original).copy(note = "Synthetic edited note")
+        assertEquals(
+            Instant.parse("2026-11-02T22:15:03.123456789Z"),
+            build(edited).value().occurredAt
+        )
+        assertEquals(
+            original.conversion.convertedMinor,
+            build(edited).value().conversion.convertedMinor
+        )
+    }
+
     @Test
     fun localizedDecimalIsExactAndIdentityRequiresNoForeignRate() {
         val result = build(fields()).value()

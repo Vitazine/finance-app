@@ -64,7 +64,7 @@ def run_upgrade(runner, previous_apk, current_apk):
         runner.click(runner.row_action("UpgForeign", "edit"))
         for tag, expected in [("editor_amount", "1.245"), ("editor_currency", "KWD"),
                               ("editor_rate", "1.004"),
-                              ("editor_time", "2026-11-01T09:02:03.123456789"),
+                              ("editor_time", "09:02 1 ноября 2026"),
                               ("editor_note", "Fin012ForeignFixture")]:
             assert runner.seek(tag).get("text") == expected, "Migrated synthetic field differs: " + tag
         runner.click("fx_remember")

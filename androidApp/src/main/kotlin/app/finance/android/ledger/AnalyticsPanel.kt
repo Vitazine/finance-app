@@ -32,12 +32,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
 internal fun Money.spendingLabel() = formatDecimal() + " " + currency.code
-internal fun fullDay(date: LocalDate) = date.dayOfMonth.toString().padStart(
-    2,
-    '0'
-) + "." + date.monthNumber.toString().padStart(2, '0') +
-    "." +
-    date.year.toString().padStart(4, '0')
+internal fun fullDay(date: LocalDate) = displayLocalDate(date.toString())
 internal fun LedgerFilter.hasChartFilter() = type != null ||
     categoryId != null ||
     sourceCurrency != null ||
@@ -152,7 +147,7 @@ internal fun LedgerFilter.hasChartFilter() = type != null ||
                         Text(
                             stringResource(
                                 R.string.spending_month_actual,
-                                view.currentMonth.key,
+                                displayMonth(view.currentMonth.key),
                                 view.currentMonthActual.spendingLabel()
                             ),
                             Modifier.testTag("analytics_month_actual")

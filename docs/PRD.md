@@ -37,6 +37,14 @@ Bank sync, real multi-account balances, transfers, debt management, subscription
 
 Compose Material 3; adapt to screen size, font scale and dark/light themes. Empty/loading/error states are mandatory. UI must remain responsive while AI runs.
 
+Owner refinement (2026-11-02): Russian readable dates, for example `22:15 2 ноября
+2026`, with calendar/time selection and readable date input. No editable time-zone
+or UTC-offset fields. Initial setup captures the device zone; existing settings and
+transaction zones remain unchanged. DST overlaps require an explicit first/second
+occurrence choice. Provide ten starter expense categories aligned with the local
+model taxonomy; preserve user edits/archives/deletions and imported catalogs.
+Automatically preselect a uniquely resolved active AI category, keeping it editable.
+
 ## 4. Financial rules (normative)
 
 - Income and expense amount input MUST be positive; direction is determined by enum, not by negative input.

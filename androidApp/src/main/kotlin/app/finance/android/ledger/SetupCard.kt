@@ -25,7 +25,7 @@ internal fun SetupCard(state: LedgerUiState, model: LedgerViewModel) {
     var currency by rememberSaveable(state.legacyBasis?.code) {
         mutableStateOf(state.legacyBasis?.code.orEmpty())
     }
-    var zone by rememberSaveable {
+    val zone by rememberSaveable {
         mutableStateOf(
             TimeZone.currentSystemDefault().id.let {
                 if (it in
@@ -59,21 +59,8 @@ internal fun SetupCard(state: LedgerUiState, model: LedgerViewModel) {
                         it
                 },
                 stringResource(R.string.ledger_iso_hint),
-                readOnly = state.legacyBasis != null
-            )
-            LedgerField(
-                zone,
-                stringResource(
-                    R.string.ledger_zone
-                ),
-                "setup_zone",
-                128,
-                !state.busy,
-                {
-                    zone =
-                        it
-                },
-                stringResource(R.string.ledger_zone_hint)
+                readOnly = state.legacyBasis != null,
+                imeAction = androidx.compose.ui.text.input.ImeAction.Done
             )
             state.setupIssue?.let { ErrorText(stringResource(it.message())) }
             Button(onClick = {

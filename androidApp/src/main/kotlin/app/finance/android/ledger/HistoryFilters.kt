@@ -80,12 +80,12 @@ internal fun HistoryFilters(state: LedgerUiState, model: LedgerViewModel) {
             }
         )
         LedgerField(
-            from,
+            displayLocalDate(from),
             stringResource(
                 R.string.ledger_filter_from
             ),
             "filter_from",
-            10,
+            40,
             !state.busy,
             {
                 from =
@@ -93,12 +93,12 @@ internal fun HistoryFilters(state: LedgerUiState, model: LedgerViewModel) {
             }
         )
         LedgerField(
-            through,
+            displayLocalDate(through),
             stringResource(
                 R.string.ledger_filter_through
             ),
             "filter_through",
-            10,
+            40,
             !state.busy,
             {
                 through =

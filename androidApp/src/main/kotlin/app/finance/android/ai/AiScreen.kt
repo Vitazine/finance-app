@@ -33,8 +33,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.finance.ai.contract.AiError
 import app.finance.android.R
 import app.finance.android.ledger.ChoiceMenu
+import app.finance.android.ledger.EntryDateTimeField
 import app.finance.android.ledger.ErrorText
 import app.finance.android.ledger.LedgerField
+import app.finance.android.ledger.OccurrenceChoices
 import app.finance.android.ledger.PageHeader
 import app.finance.android.ledger.TypeChoices
 import app.finance.android.ledger.message
@@ -246,42 +248,12 @@ import app.finance.android.ledger.message
                                 }
                             )
                             Text(stringResource(R.string.ai_time_rule))
-                            LedgerField(
-                                f.localTime,
-                                stringResource(
-                                    R.string.ai_time_label
-                                ),
-                                "ai_time_${p.index}",
-                                64,
-                                !s.busy,
-                                { v ->
-                                    model.edit(p.index) { it.withLocalTime(v) }
-                                }
-                            )
-                            LedgerField(
-                                f.zoneId,
-                                stringResource(
-                                    R.string.ai_zone_label
-                                ),
-                                "ai_zone_${p.index}",
-                                128,
-                                !s.busy,
-                                { v ->
-                                    model.edit(p.index) { it.copy(zoneId = v, offset = null) }
-                                }
-                            )
-                            LedgerField(
-                                f.offset.orEmpty(),
-                                stringResource(
-                                    R.string.ai_offset_label
-                                ),
-                                "ai_offset_${p.index}",
-                                16,
-                                !s.busy,
-                                { v ->
-                                    model.edit(p.index) { it.copy(offset = v.ifBlank { null }) }
-                                }
-                            )
+                            EntryDateTimeField(f.localTime, "ai_time_${p.index}", !s.busy) { v ->
+                                model.edit(p.index) { it.withLocalTime(v) }
+                            }
+                            OccurrenceChoices(f, "ai_time_${p.index}", !s.busy) { offset ->
+                                model.edit(p.index) { it.copy(offset = offset) }
+                            }
                             if (f.currency !=
                                 s.draft!!.context.settings.primaryCurrency.code
                             ) {

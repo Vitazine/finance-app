@@ -168,7 +168,7 @@ class RateCacheUiTest {
         assertNull(model.state.value.editor!!.fields.selectedQuote)
         bring("fx_candidate_rate").assertTextContains("1.004", substring = true)
         bring("fx_candidate_source").assertTextContains("Ручной курс", substring = true)
-        bring("fx_candidate_date").assertTextContains("01.11.2026", substring = true)
+        bring("fx_candidate_date").assertTextContains("1 ноября 2026", substring = true)
         bring("fx_candidate_retrieved").assertIsDisplayed()
         bring("fx_candidate_age").assertIsDisplayed()
         click("editor_save")

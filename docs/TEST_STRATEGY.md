@@ -28,6 +28,11 @@ Every requirement maps to automated checks when practical; do not equate a green
 - Category archive preserves history; delete/edit updates aggregates.
 - AI unsupported, missing amount, multi-transaction, malformed JSON, repeated confirmation, cancellation, background interruption, OOM simulation.
 - Damaged schema/checksum, references to absent categories, oversize backup, repeated import.
+- Readable Russian date input/display, unchanged nanosecond instants on note-only
+  edits, picker cancel/apply, DST first/second occurrence without raw offset entry.
+- Starter-category retry/reopen/archive/rename/deletion/import preservation, model
+  code to Russian category mapping, duplicate/archived/wrong-type abstention and
+  editable AI selection with zero unconfirmed writes.
 
 ## 4. Acceptance matrix
 

@@ -12,6 +12,7 @@ import app.finance.ai.contract.validAiText
 import app.finance.core.money.CurrencyCode
 import app.finance.core.money.Money
 import app.finance.core.money.MoneyResult
+import app.finance.domain.ledger.DefaultCategories
 import app.finance.domain.ledger.EntryType
 import app.finance.domain.ledger.LedgerId
 import kotlinx.datetime.LocalDate
@@ -112,9 +113,8 @@ class AiDraftParser {
         if (!validAiText(hint, 120) || !validAiText(description, 2000, multiline = true)) {
             return AiResult.Failure(AiError.INVALID_TEXT)
         }
-        val matches = context.categories.filter {
-            it.type == type && it.archivedAt == null && it.name == hint
-        }
+        val active = context.categories.filter { it.type == type && it.archivedAt == null }
+        val matches = active.filter { it.name == hint || DefaultCategories.matchesHint(hint, it) }
         val issues = mutableSetOf<ProposalIssue>()
         if (matches.isEmpty()) issues.add(ProposalIssue.CATEGORY_UNRESOLVED)
         if (matches.size > 1) issues.add(ProposalIssue.CATEGORY_AMBIGUOUS)

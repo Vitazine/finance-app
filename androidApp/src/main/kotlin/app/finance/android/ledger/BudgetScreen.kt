@@ -56,7 +56,7 @@ private fun Money.label() = formatDecimal() + " " + currency.code
 
 @Composable private fun BudgetDetails(view: BudgetOverview) {
     Text(
-        stringResource(R.string.budget_month, view.month.key, view.zoneId),
+        stringResource(R.string.budget_month, displayMonth(view.month.key), view.zoneId),
         Modifier.testTag("budget_month")
     )
     Text(

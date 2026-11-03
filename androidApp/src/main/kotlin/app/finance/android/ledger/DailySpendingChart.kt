@@ -65,8 +65,8 @@ import app.finance.domain.analytics.SpendingSnapshot
         }
     }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        Text(fullDay(view.daily.first().date).take(5), style = MaterialTheme.typography.bodySmall)
-        Text(fullDay(view.daily.last().date).take(5), style = MaterialTheme.typography.bodySmall)
+        Text(shortDay(view.daily.first().date), style = MaterialTheme.typography.bodySmall)
+        Text(shortDay(view.daily.last().date), style = MaterialTheme.typography.bodySmall)
     }
     val maximumMoney = view.daily.maxBy { it.amount.amountMinor }.amount
     Text(

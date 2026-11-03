@@ -41,6 +41,11 @@ Start with `androidApp` + `shared` if this is sufficient; split modules only whe
 - `Transaction(id: UUID, type: INCOME|EXPENSE, amountMinor: Long, sourceCurrency: CurrencyCode, categoryId: UUID, occurredAt: Instant, displayDateTimeZone, note?, source: MANUAL|AI, createdAt, updatedAt, conversionSnapshot)`.
 - `ConversionSnapshot(sourceCurrency, baseCurrency, rateDecimal, convertedMinor, effectiveAt, sourceId, roundingPolicy)`; for same-currency, identity snapshot. All converted financial totals use persisted snapshot, never an updated FX cache.
 - `Category(id, type, name, archivedAt?)`.
+- The Android bootstrap installs the ten starter expense categories once, with
+  stable IDs and retry-safe matching against existing/archived categories. A private
+  nonfinancial installation marker prevents recreating later deletions. Confirmed
+  backup replacement persists the no-reseed marker before replacing the dataset;
+  a marker failure aborts replacement. Imported catalogs remain authoritative.
 - `MonthlyBudget(yearMonth, currencyCode, limitMinor, updatedAt)`.
 - `ExchangeRate(base, quote, decimalRate, effectiveAt, provider, retrievedAt)`.
 - `AppSettings(primaryCurrency, zoneId, theme, locale, modelLocation?)`.

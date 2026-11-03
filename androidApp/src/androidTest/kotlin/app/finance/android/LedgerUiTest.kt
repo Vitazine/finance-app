@@ -118,7 +118,7 @@ class LedgerUiTest {
     private fun setupUi() {
         waitTag("setup_currency")
         text("setup_currency", "USD")
-        text("setup_zone", "UTC")
+        compose.onNodeWithTag("setup_zone").assertDoesNotExist()
         click("setup_save")
         waitTag("home_balance")
     }
@@ -142,6 +142,57 @@ class LedgerUiTest {
         waitTag("editor_save")
     }
     private fun historyRows() = runBlocking { store.transactions.history().value().items }
+
+    private fun saveProof(name: String) {
+        if (InstrumentationRegistry.getArguments().getString("saveProof") != "true") return
+        compose.waitForIdle()
+        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        java.io.File(context.filesDir, name + ".png").outputStream().use {
+            check(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it))
+        }
+        bitmap.recycle()
+    }
+
+    @Test fun outOfCalendarYearCanOpenAndCancelWithoutLosingDraft() {
+        seedReady()
+        render()
+        waitTag("home_add")
+        click("home_add")
+        compose.runOnUiThread { model.fields { it.withLocalTime("0000-11-02T22:15") } }
+        click("editor_time_picker")
+        waitTag("editor_time_date_next")
+        click("editor_time_picker_cancel")
+        assertEquals("0000-11-02T22:15", model.state.value.editor!!.fields.localTime)
+        assertEquals(0, historyRows().size)
+        click("editor_cancel")
+    }
+
+    @Test fun readableDatePickerCancelPreservesPrecisionAndExplicitApplyDoesNotPost() {
+        seedReady()
+        render()
+        waitTag("home_add")
+        click("home_add")
+        compose.runOnUiThread {
+            model.fields { it.withLocalTime("2026-11-02T22:15:03.123456789") }
+        }
+        compose.onNodeWithTag("editor_time").assertTextContains("22:15 2 ноября 2026")
+        click("editor_time_picker")
+        waitTag("editor_time_date_next")
+        saveProof("readable-calendar")
+        click("editor_time_date_next")
+        waitTag("editor_time_time_save")
+        saveProof("readable-clock")
+        click("editor_time_picker_cancel")
+        assertEquals("2026-11-02T22:15:03.123456789", model.state.value.editor!!.fields.localTime)
+        click("editor_time_picker")
+        waitTag("editor_time_date_next")
+        click("editor_time_date_next")
+        waitTag("editor_time_time_save")
+        click("editor_time_time_save")
+        assertEquals("2026-11-02T22:15", model.state.value.editor!!.fields.localTime)
+        assertEquals(0, historyRows().size)
+        click("editor_cancel")
+    }
 
     @Test
     fun setupCategoryCreateEditCancelDeleteUpdateRealLedger() {
@@ -469,9 +520,9 @@ class LedgerUiTest {
         click("nav_TRANSACTIONS")
         click("filters_toggle")
         bring("filter_from")
-        compose.onNodeWithTag("filter_from").assertTextContains("2026-11-01")
+        compose.onNodeWithTag("filter_from").assertTextContains("1 ноября 2026")
         bring("filter_through")
-        compose.onNodeWithTag("filter_through").assertTextContains("2026-11-01")
+        compose.onNodeWithTag("filter_through").assertTextContains("1 ноября 2026")
         click("filters_apply")
         compose.waitUntil(10000) { !model.state.value.busy }
         assertEquals(5, model.state.value.history.size)
