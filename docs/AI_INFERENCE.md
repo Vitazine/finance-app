@@ -55,9 +55,13 @@ Starter category mapping accepts the model's known expense codes (`cafes`,
 `groceries`, etc.) and their Russian catalog names, case-insensitively. Exact custom
 names remain supported. Only one active category of the proposal's type may match;
 duplicates, archived, unknown or wrong-type categories require manual selection.
-The mapping creates no categories or ledger records. Date-only output still requires
-an explicit time; the UI offers readable input and a date/time picker without zone
-or raw offset entry. This mapping does not establish real-model accuracy or latency.
+The mapping creates no categories or ledger records. Owner refinement (2026-11-03):
+date-only output defaults to the request's current local time in the saved app zone,
+preserving the proposal date. A single explicit numeric time in one-operation text
+has priority; multiple ambiguous times require editing. Full edited timestamps are
+preserved. Defaults use the same frozen reference on confirmation/retry. The UI offers
+readable input and a date/time picker without zone or raw offset entry. This mapping
+does not establish real-model accuracy or latency.
 
 ## 4. Evaluation
 

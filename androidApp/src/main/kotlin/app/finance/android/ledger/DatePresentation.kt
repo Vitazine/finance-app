@@ -30,7 +30,7 @@ internal fun parseLocalDate(text: String): LocalDate = try {
 internal fun displayLocalTime(text: String): String = try {
     parseLocalTime(text).format(humanTime)
 } catch (_: DateTimeException) {
-    // A date-only AI proposal must still require the owner to choose a time.
+    // Keep incomplete date-only edits readable until their time is resolved on confirmation.
     if (text.endsWith("T")) displayLocalDate(text.dropLast(1)) else text
 }
 

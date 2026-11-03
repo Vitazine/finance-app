@@ -70,7 +70,7 @@
     <string name="ledger_err_rate">Введите положительный десятичный курс</string>
     <string name="ledger_err_category">Выберите категорию</string>
     <string name="ledger_err_note">Заметка: не более 2000 символов, без управляющих знаков</string>
-    <string name="ledger_err_time">Проверьте дату, время и часовой пояс</string>
+    <string name="ledger_err_time">Укажите корректные дату и время операции</string>
     <string name="ledger_err_gap">Такого местного времени нет из-за перевода часов. Выберите другое.</string>
     <string name="ledger_err_ambiguous">Выберите смещение UTC для повторяющегося времени</string>
     <string name="ledger_err_filter">Проверьте даты и параметры фильтра</string>

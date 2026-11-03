@@ -14,7 +14,8 @@
     <string name="ai_preview">Предложение %1$d</string>
     <string name="ai_confirmed">Подтверждение учтено</string>
     <string name="ai_discarded">Предложение отменено</string>
-    <string name="ai_time_rule">Укажите точное время операции. Время суток из текста не подставляется автоматически.</string>
+    <string name="ai_time_rule">Если время не указано, подставлено время отправки запроса. Его можно изменить перед подтверждением.</string>
+    <string name="ai_time_ambiguous">Время из запроса неоднозначно. Укажите время для этой операции.</string>
     <string name="ai_manual_rate">Явный курс в основную валюту</string>
     <string name="ai_note">Заметка</string>
     <string name="ai_confirm">Подтвердить и сохранить</string>

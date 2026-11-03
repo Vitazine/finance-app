@@ -114,7 +114,11 @@ class AiConfirmationUiTest {
                 AiViewModel::class.java -> AiViewModel(
                     store,
                     FakeInferenceEngine(output, delayMillis = delay),
-                    (LocalModelRef.create("fixture") as AiResult.Success).value
+                    (LocalModelRef.create("fixture") as AiResult.Success).value,
+                    clock = object : kotlinx.datetime.Clock {
+                        override fun now() =
+                            kotlinx.datetime.Instant.parse("2026-11-03T12:34:56.123Z")
+                    }
                 )
                 else -> LedgerViewModel(
                     store.settings,
@@ -175,15 +179,62 @@ class AiConfirmationUiTest {
         assertEquals(0L, count())
     }
 
-    @Test fun previewDateIsReadableAndDoesNotInventTimeOfDay() {
+    @Test fun missingTimeUsesRequestTimeAndCanBeExplicitlyConfirmed() {
         render()
         text("ai_prompt", "Synthetic purchase")
         click("ai_generate")
         waitTag("ai_amount_0")
-        compose.onNodeWithTag("ai_time_0").assertTextContains("2 ноября 2026")
+        compose.onNodeWithTag("ai_time_0").assertTextContains("12:34 2 ноября 2026")
+        assertEquals(0L, count())
+        click("ai_confirm_0")
+        waitTag("ai_confirmed_0")
+        assertEquals(1L, count())
+        assertEquals(
+            kotlinx.datetime.Instant.parse("2026-11-02T12:34:56.123Z"),
+            runBlocking {
+                (store.transactions.history() as LedgerResult.Success).value.items.single()
+                    .transaction.entry.occurredAt
+            }
+        )
+    }
+
+    @Test fun explicitTimeInRequestWinsOverCurrentTime() {
+        render()
+        text("ai_prompt", "Synthetic purchase at 22:15")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        compose.onNodeWithTag("ai_time_0").assertTextContains("22:15 2 ноября 2026")
+        assertEquals(0L, count())
+    }
+
+    @Test fun timeRangeRequiresEditingAndNeverPostsAnArbitraryTime() {
+        render()
+        text("ai_prompt", "Synthetic purchase between 10:15-22:15")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        assertEquals(0L, count())
         click("ai_confirm_0")
         waitTag("ai_input_error_0")
         assertEquals(0L, count())
+        compose.onNodeWithTag("ai_confirmed_0").assertDoesNotExist()
+    }
+
+    @Test fun dateOnlyEditIsCompletedWithFrozenRequestTimeOnConfirmation() {
+        render()
+        text("ai_prompt", "Synthetic purchase")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        text("ai_time_0", "1 ноября 2026")
+        click("ai_confirm_0")
+        waitTag("ai_confirmed_0")
+        assertEquals(1L, count())
+        assertEquals(
+            kotlinx.datetime.Instant.parse("2026-11-01T12:34:56.123Z"),
+            runBlocking {
+                (store.transactions.history() as LedgerResult.Success).value.items.single()
+                    .transaction.entry.occurredAt
+            }
+        )
     }
 
     @Test fun categoryFromModelIsSelectedAutomaticallyAndRemainsEditableWithoutPosting() {
@@ -212,6 +263,7 @@ class AiConfirmationUiTest {
         assertEquals(0L, count())
         text("ai_amount_0", "15.00")
         assertEquals(0L, count())
+        text("ai_time_0", "invalid")
         click("ai_confirm_0")
         waitTag("ai_input_error_0")
         assertEquals(0L, count())

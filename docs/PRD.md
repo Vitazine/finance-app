@@ -44,6 +44,10 @@ transaction zones remain unchanged. DST overlaps require an explicit first/secon
 occurrence choice. Provide ten starter expense categories aligned with the local
 model taxonomy; preserve user edits/archives/deletions and imported catalogs.
 Automatically preselect a uniquely resolved active AI category, keeping it editable.
+Owner refinement (2026-11-03): if an AI operation has no explicit time, use the
+request-time clock in the saved app zone while preserving its date. Explicit numeric
+time has priority; ambiguous times require editing. Show the chosen time before
+confirmation and freeze it across retries. Explicit confirmation remains mandatory.
 
 ## 4. Financial rules (normative)
 

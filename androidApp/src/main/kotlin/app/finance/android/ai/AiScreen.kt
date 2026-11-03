@@ -247,7 +247,15 @@ import app.finance.android.ledger.message
                                         { model.edit(p.index) { it.copy(categoryId = c.id) } }
                                 }
                             )
-                            Text(stringResource(R.string.ai_time_rule))
+                            Text(
+                                stringResource(
+                                    if (f.localTime.endsWith("T")) {
+                                        R.string.ai_time_ambiguous
+                                    } else {
+                                        R.string.ai_time_rule
+                                    }
+                                )
+                            )
                             EntryDateTimeField(f.localTime, "ai_time_${p.index}", !s.busy) { v ->
                                 model.edit(p.index) { it.withLocalTime(v) }
                             }

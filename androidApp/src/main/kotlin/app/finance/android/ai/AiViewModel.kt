@@ -74,7 +74,8 @@ internal class AiViewModel(
     private val store: LedgerStore,
     private val engine: LocalInferenceEngine? = null,
     private val model: LocalModelRef? = null,
-    val experimental: Boolean = false
+    val experimental: Boolean = false,
+    private val clock: Clock = Clock.System
 ) : ViewModel() {
     private val mutable = MutableStateFlow(AiUiState())
     val state = mutable.asStateFlow()
@@ -297,7 +298,7 @@ internal class AiViewModel(
                             publishError(token, AiError.INVALID_CONTEXT)
                             return@withContext
                         }
-                        val c = AiContext.create(Clock.System.now(), settings, categories)
+                        val c = AiContext.create(clock.now(), settings, categories)
                         if (c !is AiResult.Success) {
                             publishError(token, (c as AiResult.Failure).error)
                             return@withContext
@@ -345,15 +346,21 @@ internal class AiViewModel(
                                                 AiPreview(
                                                     index,
                                                     id(),
-                                                    EntryFields(
-                                                        p.type,
-                                                        p.money.formatDecimal(),
-                                                        p.money.currency.code,
-                                                        p.categoryId,
-                                                        "",
-                                                        p.date.toString() + "T",
-                                                        c.value.settings.zoneId,
-                                                        note = p.description
+                                                    resolveDraftTime(
+                                                        EntryFields(
+                                                            p.type,
+                                                            p.money.formatDecimal(),
+                                                            p.money.currency.code,
+                                                            p.categoryId,
+                                                            "",
+                                                            p.date.toString() + "T",
+                                                            c.value.settings.zoneId,
+                                                            note = p.description
+                                                        ),
+                                                        p.date,
+                                                        text,
+                                                        d.context.reference,
+                                                        d.proposals.size
                                                     )
                                                 )
                                             },
@@ -481,8 +488,25 @@ internal class AiViewModel(
         val d = s.draft ?: return
         val preview =
             s.previews.singleOrNull { it.index == index && !it.confirmed && !it.canceled } ?: return
+        val proposal = d.proposals.getOrNull(index) ?: return
+        val fields = resolveDraftTime(
+            preview.fields,
+            proposal.date,
+            s.prompt,
+            d.context.reference,
+            d.proposals.size
+        )
+        if (fields != preview.fields) {
+            mutable.update { state ->
+                state.copy(
+                    previews = state.previews.map { p ->
+                        if (p.index == index) p.copy(fields = fields) else p
+                    }
+                )
+            }
+        }
         val result =
-            buildEntry(preview.fields, d.context.settings, null, preview.id, d.context.reference)
+            buildEntry(fields, d.context.settings, null, preview.id, d.context.reference)
         if (result is InputResult.Failure) {
             mutable.update {
                 it.copy(
