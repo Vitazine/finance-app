@@ -129,15 +129,16 @@ internal class NativeInferenceEngine(private val file: File, private val systemP
     override suspend fun generate(request: InferenceRequest): AiResult<InferenceText> =
         generate(request, GenerationOptions()) {}
 
-    private fun progress(expectedGeneration: Long): GenerationProgress? = synchronized(gate) {
-        if (handle == 0L) return@synchronized null
-        val raw = NativeBridge.progress(handle)
-        if (raw.getOrNull(7) != expectedGeneration) return@synchronized null
-        GenerationProgress.fromNative(
-            raw,
-            Debug.getPss().coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
-        )
-    }
+    private fun progress(expectedGeneration: Long, diagnostic: Boolean): GenerationProgress? =
+        synchronized(gate) {
+            if (handle == 0L) return@synchronized null
+            val raw = NativeBridge.progress(handle)
+            if (raw.getOrNull(7) != expectedGeneration) return@synchronized null
+            GenerationProgress.fromNative(
+                raw,
+                if (diagnostic) Debug.getPss().coerceAtMost(Int.MAX_VALUE.toLong()).toInt() else 0
+            )
+        }
 
     override suspend fun generate(
         request: InferenceRequest,
@@ -152,22 +153,14 @@ internal class NativeInferenceEngine(private val file: File, private val systemP
                 return AiResult.Failure(AiError.INVALID_CONTEXT)
             }
             val effective = options.effective(BuildConfig.DEBUG)
-            val nextGeneration = if (effective.diagnostic) {
-                synchronized(gate) { NativeBridge.progress(h)[7] + 1 }
-            } else {
-                0L
-            }
+            val nextGeneration = synchronized(gate) { NativeBridge.progress(h)[7] + 1 }
             val prompt = Day07Protocol().prompt(request, systemPrompt)
             val raw = coroutineScope {
-                val monitor: Job? = if (effective.diagnostic) {
-                    launch(Dispatchers.IO) {
-                        while (isActive) {
-                            progress(nextGeneration)?.let(report)
-                            delay(500)
-                        }
+                val monitor: Job = launch(Dispatchers.IO) {
+                    while (isActive) {
+                        progress(nextGeneration, effective.diagnostic)?.let(report)
+                        delay(500)
                     }
-                } else {
-                    null
                 }
                 try {
                     nativeWork(effective.timeoutMs) {
@@ -179,8 +172,8 @@ internal class NativeInferenceEngine(private val file: File, private val systemP
                     }
                 } finally {
                     withContext(NonCancellable) {
-                        monitor?.cancelAndJoin()
-                        if (effective.diagnostic) progress(nextGeneration)?.let(report)
+                        monitor.cancelAndJoin()
+                        progress(nextGeneration, effective.diagnostic)?.let(report)
                     }
                 }
             } ?: return AiResult.Failure(AiError.ENGINE_FAILURE)
@@ -223,9 +216,9 @@ internal class NativeInferenceEngine(private val file: File, private val systemP
         }
     }
     companion object {
-        const val KEY = "day07-iteration4-q4-k-m"
+        const val KEY = "day09-iteration1-q4-k-m"
         const val BYTES = 2497279040L
-        const val SHA256 = "11bb8bdadec9baf9d0a1a91e0ef312c787cd967f95ac261d82ee283fdf10d699"
+        const val SHA256 = "d33ea62a2040ae9b7ef54a4d2efd659269c1aa30beccb1772309b9348d7b1db9"
     }
 }
 internal object NativeBridge {

@@ -75,7 +75,7 @@ class LedgerUiTest {
         store.close()
         context.deleteDatabase(name)
     }
-    private fun render() {
+    private fun render(dark: androidx.compose.runtime.State<Boolean>? = null) {
         val owner = object : ViewModelStoreOwner {
             override val viewModelStore = models
         }
@@ -91,7 +91,11 @@ class LedgerUiTest {
             ) as T
         }
         model = ViewModelProvider(owner, factory)[LedgerViewModel::class.java]
-        compose.setContent { FinanceTheme { FinanceApp(model) } }
+        compose.setContent {
+            FinanceTheme(dark?.value ?: androidx.compose.foundation.isSystemInDarkTheme()) {
+                FinanceApp(model)
+            }
+        }
     }
     private fun waitTag(tag: String) {
         compose.waitUntil(10000) {
@@ -146,11 +150,31 @@ class LedgerUiTest {
     private fun saveProof(name: String) {
         if (InstrumentationRegistry.getArguments().getString("saveProof") != "true") return
         compose.waitForIdle()
+        android.os.SystemClock.sleep(350)
         val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
         java.io.File(context.filesDir, name + ".png").outputStream().use {
             check(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it))
         }
         bitmap.recycle()
+    }
+
+    @Test fun materialHomeKeepsPrimaryActionsReadableInBothThemes() {
+        seedReady()
+        val dark = androidx.compose.runtime.mutableStateOf(false)
+        render(dark)
+        waitTag("home_balance")
+        compose.onNodeWithTag("home_balance").assertTextEquals("0.00 USD")
+        compose.onNodeWithTag("home_history").assertIsDisplayed()
+        bring("home_add").assertIsDisplayed()
+        saveProof("day09-home-light")
+        compose.runOnIdle { dark.value = true }
+        bring("home_add").assertIsDisplayed()
+        saveProof("day09-home-dark")
+        click("home_add")
+        waitTag("editor_save")
+        click("editor_cancel")
+        waitTag("home_balance")
+        assertEquals(0, historyRows().size)
     }
 
     @Test fun outOfCalendarYearCanOpenAndCancelWithoutLosingDraft() {

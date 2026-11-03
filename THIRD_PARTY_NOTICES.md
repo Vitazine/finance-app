@@ -58,6 +58,10 @@ https://github.com/ggml-org/llama.cpp . License copy:
 binary. No weights, training corpus, or private prompts are included in either APK.
 
 The optional adapter accepts externally supplied model assets identified in
-[artifact manifest](docs/models/day07-iteration4.json). Weights, adapter, training
+[current Day9 artifact manifest](docs/models/day09-iteration1.json). The base is
+`mlx-community/Qwen3-4B-Instruct-2507-4bit`, revision
+`50d427756c6b1b2fe0c0a10f67fbda1fc8e82c1b`, marked Apache-2.0 by its publisher.
+The owner selected local use of the supplied continued LoRA adapter; no separate
+adapter redistribution license is asserted. Weights, adapter, training
 corpus and private prompt are not redistributed. Verify licensing and provenance
 independently before obtaining or using a model; source publication grants no model rights.

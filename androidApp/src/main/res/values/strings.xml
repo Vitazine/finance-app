@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="ai_generation_prepare">Подготовка запроса</string>
+    <string name="ai_generation_prefill">Обработка запроса</string>
+    <string name="ai_generation_answer">Модель формирует ответ</string>
+    <string name="ai_generation_validate">Проверка ответа</string>
+    <string name="ai_generation_input">Входной контекст: %1$d из %2$d токенов. Далее — формирование ответа.</string>
+    <string name="ai_generation_output">Получено токенов ответа: %1$d</string>
+    <string name="ai_generation_elapsed">Прошло %1$d с · можно отменить</string>
   <string name="app_name">Finance App</string>
   <string name="home">Главная</string>
   <string name="transactions">Операции</string>

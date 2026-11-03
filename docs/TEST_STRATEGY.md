@@ -33,6 +33,13 @@ Every requirement maps to automated checks when practical; do not equate a green
 - Starter-category retry/reopen/archive/rename/deletion/import preservation, model
   code to Russian category mapping, duplicate/archived/wrong-type abstention and
   editable AI selection with zero unconfirmed writes.
+- Ordinary generation's horizontal progress, measured input denominator versus
+  indeterminate answer, phase/elapsed/cancel and late callback rejection. The
+  diagnostic switch must remain unnecessary for progress and necessary for600s/PSS.
+- Model upgrade preserves previous versioned files, refuses old-model fallback and
+  wrong hashes; real-model opt-in tests remain separate from deterministic UI tests.
+- Brand color #B22222, text contrast in both themes, system bars following the
+  selected app theme, retained navigation/IME/font scaling behavior.
 
 ## 4. Acceptance matrix
 

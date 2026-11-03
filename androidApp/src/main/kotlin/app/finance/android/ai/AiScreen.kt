@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -116,13 +115,7 @@ import app.finance.android.ledger.message
             }
         }
         if (s.generating) {
-            CircularProgressIndicator(Modifier.testTag("ai_loading"))
-            TextButton(
-                onClick = model::cancel,
-                modifier = Modifier.testTag("ai_cancel_generation")
-            ) {
-                Text(stringResource(R.string.ai_cancel))
-            }
+            GenerationProgressCard(s.generationProgress, model::cancel)
         }
         TextButton(
             onClick = onManual,

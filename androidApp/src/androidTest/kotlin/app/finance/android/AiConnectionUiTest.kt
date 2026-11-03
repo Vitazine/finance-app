@@ -1,6 +1,10 @@
 package app.finance.android
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -50,6 +54,7 @@ class AiConnectionUiTest {
     private lateinit var model: AiViewModel
     private val models = ViewModelStore()
     private val visible = mutableStateOf(true)
+    private val dark = mutableStateOf(false)
     private val engine = ProbeEngine()
 
     @Before fun setup() = runBlocking<Unit> {
@@ -90,12 +95,30 @@ class AiConnectionUiTest {
             ) as T
         }
         compose.runOnUiThread { model = ViewModelProvider(owner, factory)[AiViewModel::class.java] }
-        compose.setContent { FinanceTheme { if (visible.value) AiScreen(model, {}, {}) } }
+        compose.setContent {
+            FinanceTheme(dark.value) {
+                androidx.compose.material3.Surface {
+                    if (visible.value) AiScreen(model, {}, {})
+                }
+            }
+        }
     }
     private fun waitTag(tag: String) {
         compose.waitUntil(5000) {
             compose.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()
         }
+    }
+
+    private fun saveProof(name: String) {
+        if (InstrumentationRegistry.getArguments().getString("saveProof") != "true") return
+        compose.waitForIdle()
+        // System UI applies window appearance asynchronously after Compose becomes idle.
+        android.os.SystemClock.sleep(350)
+        val bitmap = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        java.io.File(context.filesDir, name + ".png").outputStream().use {
+            check(bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it))
+        }
+        bitmap.recycle()
     }
 
     @Test fun debugDiagnosticsAreExplicitAndAbsentFromOrdinaryUi() {
@@ -156,7 +179,7 @@ class AiConnectionUiTest {
         )
     }
 
-    @Test fun ordinaryGenerationDoesNotRequestExtendedTimeoutOrMetrics() {
+    @Test fun ordinaryGenerationKeepsDefaultTimeoutAndReportsProgress() {
         render(experimental = true)
         waitTag("ai_model_ready")
         compose.runOnUiThread {
@@ -166,7 +189,56 @@ class AiConnectionUiTest {
         compose.waitUntil(5000) { engine.generations.get() == 1 && !model.state.value.busy }
         assertEquals(false, engine.options!!.diagnostic)
         assertEquals(120_000L, engine.options!!.timeoutMs)
-        assertEquals(null, model.state.value.generationProgress)
+        assertEquals(256, model.state.value.generationProgress!!.processedTokens)
+    }
+
+    @Test fun ordinaryRequestShowsInputProgressThenIndeterminateAnswerAndCancel() {
+        engine.suspendGenerate = true
+        render(experimental = true)
+        waitTag("ai_model_ready")
+        compose.runOnUiThread {
+            model.prompt("Synthetic fixture")
+            model.generate()
+        }
+        waitTag("ai_generation_phase")
+        compose.onNodeWithTag("ai_generation_phase")
+            .assertTextContains("Обработка запроса", substring = true)
+        compose.onNodeWithTag("ai_loading").assert(
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.ProgressBarRangeInfo,
+                ProgressBarRangeInfo(256f / 900f, 0f..1f)
+            )
+        )
+        saveProof("day09-generation-light")
+        compose.runOnIdle { dark.value = true }
+        saveProof("day09-generation-dark")
+        val bounds = compose.onNodeWithTag("ai_loading").fetchSemanticsNode().boundsInRoot
+        org.junit.Assert.assertTrue("Must be a horizontal bar", bounds.width > bounds.height * 8)
+        val report = engine.generationReport!!
+        compose.runOnUiThread {
+            report(GenerationProgress(GenerationPhase.GENERATING, outputTokens = 5))
+        }
+        compose.onNodeWithTag("ai_generation_phase")
+            .assertTextContains("Модель формирует ответ", substring = true)
+        compose.onNodeWithTag("ai_loading").assert(
+            SemanticsMatcher.expectValue(
+                SemanticsProperties.ProgressBarRangeInfo,
+                ProgressBarRangeInfo.Indeterminate
+            )
+        )
+        compose.onNodeWithTag("ai_cancel_generation").performClick()
+        compose.waitUntil(5000) { !model.state.value.busy }
+        compose.onNodeWithTag("ai_loading").assertDoesNotExist()
+        val stopped = model.state.value.generationProgress
+        compose.runOnUiThread { report(GenerationProgress(outputTokens = 77)) }
+        assertEquals(stopped, model.state.value.generationProgress)
+        assertEquals(120_000L, engine.options!!.timeoutMs)
+        assertEquals(
+            0L,
+            runBlocking {
+                (store.transactions.overview() as LedgerResult.Success).value.count
+            }
+        )
     }
 
     @Test fun entryAutomaticallyLoadsOnceWithoutGeneratingOrWriting() {
@@ -364,7 +436,7 @@ class AiConnectionUiTest {
         ): AiResult<InferenceText> {
             this.options = options
             generationReport = report
-            if (options.diagnostic) {
+            run {
                 report(
                     GenerationProgress(
                         GenerationPhase.PREFILL,

@@ -34,15 +34,18 @@ class AutoLocalModelEngineTest {
     private var factories = 0
     private fun adapter(ram: Long = 8L * 1024 * 1024 * 1024) =
         AutoLocalModelEngine(root, { ram }, { file, text ->
-            assertEquals("day07.gguf", file.name)
+            assertEquals("model.gguf", file.name)
             assertEquals(prompt, text)
             factories++
             engine
         }, promptHash)
     private fun provision() {
-        File(root, "research").mkdirs()
-        File(root, "research/day07.gguf").writeText("Test-only delegated artifact")
-        File(root, "research/system.txt").writeText(prompt)
+        File(root, "models/day09-iteration1-q4-k-m").mkdirs()
+        File(
+            root,
+            "models/day09-iteration1-q4-k-m/model.gguf"
+        ).writeText("Test-only delegated artifact")
+        File(root, "models/day09-iteration1-q4-k-m/system.txt").writeText(prompt)
     }
     private fun failure(result: AiResult<*>, error: AiError) =
         assertEquals(error, (result as AiResult.Failure).error)
@@ -62,6 +65,14 @@ class AutoLocalModelEngineTest {
         assertEquals(1, engine.unloads)
     }
 
+    @Test fun legacyDay07AssetsAreNotSilentlyUsedForDay09() = runBlocking {
+        File(root, "research").mkdirs()
+        File(root, "research/day07.gguf").writeText("Old weights")
+        File(root, "research/system.txt").writeText(prompt)
+        failure(adapter().loadModel(reference), AiError.MODEL_UNAVAILABLE)
+        assertEquals(0, factories)
+    }
+
     @Test fun missingAssetsAreUnavailableAndDoNotCreateEngine() = runBlocking {
         failure(adapter().loadModel(reference), AiError.MODEL_UNAVAILABLE)
         assertEquals(0, factories)
@@ -69,9 +80,9 @@ class AutoLocalModelEngineTest {
 
     @Test fun wrongPromptIdentityAndOversizedPromptFailBeforeNativeLoad() = runBlocking {
         provision()
-        File(root, "research/system.txt").writeText("altered")
+        File(root, "models/day09-iteration1-q4-k-m/system.txt").writeText("altered")
         failure(adapter().loadModel(reference), AiError.MODEL_UNAVAILABLE)
-        File(root, "research/system.txt").writeText("x".repeat(32769))
+        File(root, "models/day09-iteration1-q4-k-m/system.txt").writeText("x".repeat(32769))
         failure(adapter().loadModel(reference), AiError.MODEL_UNAVAILABLE)
         assertEquals(0, factories)
     }
@@ -86,7 +97,7 @@ class AutoLocalModelEngineTest {
         provision()
         val outside = Files.createTempFile("outside-model-", ".gguf")
         try {
-            val model = File(root, "research/day07.gguf")
+            val model = File(root, "models/day09-iteration1-q4-k-m/model.gguf")
             model.delete()
             Files.createSymbolicLink(model.toPath(), outside)
             failure(adapter().loadModel(reference), AiError.MODEL_UNAVAILABLE)
@@ -109,7 +120,7 @@ class AutoLocalModelEngineTest {
         adapter.loadModel(reference, statuses::add)
         assertEquals(ConnectionFailure.MODEL_MISSING, statuses.last().failure)
         provision()
-        File(root, "research/system.txt").delete()
+        File(root, "models/day09-iteration1-q4-k-m/system.txt").delete()
         statuses.clear()
         adapter.loadModel(reference, statuses::add)
         assertEquals(ConnectionFailure.PROMPT_MISSING, statuses.last().failure)
@@ -120,11 +131,11 @@ class AutoLocalModelEngineTest {
         provision()
         val adapter = adapter()
         val statuses = mutableListOf<ModelConnection>()
-        File(root, "research/system.txt").writeText("altered")
+        File(root, "models/day09-iteration1-q4-k-m/system.txt").writeText("altered")
         adapter.loadModel(reference, statuses::add)
         assertEquals(ConnectionFailure.PROMPT_INVALID, statuses.last().failure)
         assertEquals(0, factories)
-        File(root, "research/system.txt").writeText(prompt)
+        File(root, "models/day09-iteration1-q4-k-m/system.txt").writeText(prompt)
         statuses.clear()
         adapter.loadModel(reference, statuses::add)
         assertEquals(

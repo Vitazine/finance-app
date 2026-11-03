@@ -1,0 +1,53 @@
+{
+  "id": "day09-iteration1-q4-k-m",
+  "status": "RESEARCH_ONLY_NOT_RELEASE_QUALIFIED",
+  "artifact": {
+    "format": "GGUF",
+    "quantization": "Q4_K_M",
+    "bytes": 2497279040,
+    "sha256": "d33ea62a2040ae9b7ef54a4d2efd659269c1aa30beccb1772309b9348d7b1db9"
+  },
+  "base": {
+    "repository": "mlx-community/Qwen3-4B-Instruct-2507-4bit",
+    "revision": "50d427756c6b1b2fe0c0a10f67fbda1fc8e82c1b",
+    "weights_sha256": "2a73c6c248601ab904e035548abd8e6abb65ea27dcb5f342fb0a8910eb44173f",
+    "license": "Apache-2.0",
+    "license_url": "https://huggingface.co/Qwen/Qwen3-4B-Instruct-2507/blob/main/LICENSE"
+  },
+  "adapter": {
+    "origin": "Owner-provided Day 9 submission, iteration-1; continued Day 7 iteration-4 LoRA",
+    "format": "MLX safetensors LoRA; final continued weights, no adapter stacking",
+    "bytes": 10492748,
+    "sha256": "d1024dda3138962a371a292de46c1e09947d05b8cbcda3a7f4c445fff6dd274c",
+    "rank": 16,
+    "scale": 2.0,
+    "layers": 16,
+    "targets": ["self_attn.q_proj", "self_attn.v_proj"],
+    "permission": "Owner explicitly selected local use; no separate redistribution license asserted"
+  },
+  "files": {
+    "system.txt": "a9776636b7e4be302ded791753834bd2adc368a87aa1c83bad7eb0587b6ee260",
+    "chat_template.jinja": "64f85b198065d0fba2a81f37e10ed68161ce2c19a754c7100e67e0ca2ee9c326"
+  },
+  "conversion": {
+    "steps": ["MLX fuse with dequantize", "HF to F16 GGUF", "Q4_K_M quantize"],
+    "mlx": "0.32.4",
+    "mlx_lm": "0.32.2",
+    "network": false,
+    "source_artifacts_modified": false
+  },
+  "distribution": "No weights, adapter, dataset or private prompt distributed. Local owner-selected research use only.",
+  "runtime": {
+    "candidate": "llama.cpp",
+    "revision": "060b2fea4ed528810ddc91d48fb22b3e4d63eb85",
+    "license": "MIT",
+    "abi": "arm64-v8a",
+    "cpu": "armv8-a",
+    "context": 2048,
+    "threads": 4,
+    "sampling": "greedy",
+    "max_output_tokens": 256,
+    "network": false
+  },
+  "contract": "Same exact expense-only Day07Protocol; identical system and chat template. Mandatory editable preview and confirmation."
+}

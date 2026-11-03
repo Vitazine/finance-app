@@ -260,7 +260,7 @@ internal class AiViewModel(
                 error = null,
                 clarification = false,
                 unsupported = false,
-                generationProgress = if (diagnostic) GenerationProgress() else null,
+                generationProgress = GenerationProgress(),
                 diagnosticCanceled = false
             )
         }
@@ -309,10 +309,10 @@ internal class AiViewModel(
                             return@withContext
                         }
                         val attempt = currentCoroutineContext()
-                        val output = if (diagnostic && e is DiagnosticInferenceEngine) {
+                        val output = if (e is DiagnosticInferenceEngine) {
                             e.generate(
                                 request.value,
-                                GenerationOptions(diagnostic = true)
+                                GenerationOptions(diagnostic = diagnostic)
                             ) { progress ->
                                 if (token == epoch && attempt.isActive) {
                                     mutable.update { it.copy(generationProgress = progress) }

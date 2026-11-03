@@ -1,12 +1,15 @@
 package app.finance.android.ledger
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -21,18 +24,20 @@ import app.finance.android.R
 
 @Composable
 internal fun PageHeader(title: String) {
-    Text(
-        stringResource(R.string.app_name),
-        style = MaterialTheme.typography.labelLarge,
-        color = MaterialTheme.colorScheme.primary
-    )
-    Text(
-        title,
-        style = MaterialTheme.typography.headlineMedium,
-        modifier = Modifier.padding(top = 8.dp).semantics {
-            heading()
-        }
-    )
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            stringResource(R.string.app_name),
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Text(
+            title,
+            style = MaterialTheme.typography.headlineMedium,
+            modifier = Modifier.semantics {
+                heading()
+            }
+        )
+    }
 }
 
 @Composable
@@ -53,25 +58,38 @@ internal fun HomeScreen(state: LedgerUiState, model: LedgerViewModel, onHistory:
             item { SetupCard(state, model) }
         } else {
             item {
-                Text(
-                    stringResource(R.string.ledger_balance),
-                    style = MaterialTheme.typography.titleMedium
-                )
-                state.overview?.let { overview ->
-                    Text(
-                        "${overview.balance.formatDecimal()} ${overview.balance.currency.code}",
-                        style = MaterialTheme.typography.headlineLarge,
-                        modifier = Modifier.fillMaxWidth().testTag("home_balance")
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    Text(
-                        stringResource(R.string.ledger_count, overview.count),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
-                state.overviewError?.let {
-                    ErrorText(stringResource(it.message()))
-                    Button(onClick = model::refresh, enabled = !state.busy) {
-                        Text(stringResource(R.string.ledger_retry))
+                ) {
+                    Column(
+                        Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Text(
+                            stringResource(R.string.ledger_balance),
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        state.overview?.let { overview ->
+                            Text(
+                                "${overview.balance.formatDecimal()} ${overview.balance.currency.code}",
+                                style = MaterialTheme.typography.headlineLarge,
+                                modifier = Modifier.fillMaxWidth().testTag("home_balance")
+                            )
+                            Text(
+                                stringResource(R.string.ledger_count, overview.count),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        state.overviewError?.let {
+                            ErrorText(stringResource(it.message()))
+                            Button(onClick = model::refresh, enabled = !state.busy) {
+                                Text(stringResource(R.string.ledger_retry))
+                            }
+                        }
                     }
                 }
             }
@@ -79,7 +97,7 @@ internal fun HomeScreen(state: LedgerUiState, model: LedgerViewModel, onHistory:
                 Button(
                     onClick = model::createEntry,
                     enabled = !state.busy,
-                    modifier = Modifier.testTag("home_add")
+                    modifier = Modifier.fillMaxWidth().testTag("home_add")
                 ) {
                     Text(stringResource(R.string.ledger_add))
                 }

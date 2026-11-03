@@ -55,7 +55,7 @@ def main():
     with zipfile.ZipFile(args.apk) as apk:
         if 'lib/arm64-v8a/libfinance_inference.so' not in apk.namelist():
             raise SystemExit('APK lacks the native runtime: build with -PnativeAi=true')
-    manifest = json.loads((ROOT / 'docs/models/day07-iteration4.json').read_text())
+    manifest = json.loads((ROOT / 'docs/models/day09-iteration1.json').read_text())
     memory = text('shell', 'cat', '/proc/meminfo')
     total = int(re.search(r'^MemTotal:\s+(\d+)', memory, re.MULTILINE)[1]) * 1024
     if not args.install_only:
@@ -72,19 +72,13 @@ def main():
         print('Native APK installed; model not provisioned (--install-only).')
         return
 
-    expected = [('day07.gguf', args.model, manifest['artifact']['sha256']),
+    # Each version owns its directory. Upgrading never overwrites/deletes day-07 assets.
+    folder = 'files/models/day09-iteration1-q4-k-m'
+    expected = [('model.gguf', args.model, manifest['artifact']['sha256']),
                 ('system.txt', args.system, manifest['files']['system.txt'])]
-    for folder in ('models', 'research'):
-        valid = []
-        for name, _, checksum in expected:
-            probe = subprocess.run(base + ['shell', 'run-as', PACKAGE, 'sha256sum', f'files/{folder}/{name}'], capture_output=True, text=True)
-            valid.append(probe.returncode == 0 and probe.stdout.split()[0] == checksum)
-        if all(valid):
-            print('Existing verified private model reused; AI connects automatically on entry.')
-            return
-    command('shell', 'run-as', PACKAGE, 'mkdir', '-p', 'files/models', capture_output=True)
+    command('shell', 'run-as', PACKAGE, 'mkdir', '-p', folder, capture_output=True)
     for name, source, checksum in expected:
-        target = 'files/models/' + name
+        target = folder + '/' + name
         probe = subprocess.run(base + ['shell', 'run-as', PACKAGE, 'test', '-e', target], capture_output=True)
         if probe.returncode == 0:
             if text('shell', 'run-as', PACKAGE, 'sha256sum', target).split()[0] == checksum:

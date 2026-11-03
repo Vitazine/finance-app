@@ -19,6 +19,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.datetime.Instant
 import org.json.JSONArray
 import org.json.JSONObject
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Test
@@ -55,7 +56,10 @@ class DiagnosticInferenceRuntimeTest {
             ) as AiResult.Success
             ).value
         val samples = JSONArray()
-        val report = JSONObject().put("diagnostic", true).put("deadline_ms", 600_000)
+        val options = GenerationOptions(diagnostic = args.getString("ordinaryGeneration") != "true")
+        val report = JSONObject().put("diagnostic", options.diagnostic)
+            .put("deadline_ms", options.timeoutMs)
+            .put("model_id", NativeInferenceEngine.KEY).put("sha256", NativeInferenceEngine.SHA256)
             .put("samples", samples).put("unconfirmed_writes", 0)
         val target = File(context.filesDir, "debug-inference-metrics.json")
         var last = GenerationProgress()
@@ -69,7 +73,7 @@ class DiagnosticInferenceRuntimeTest {
             report.put("load_ms", SystemClock.elapsedRealtime() - load)
             save()
             val begun = SystemClock.elapsedRealtime()
-            val result = engine.generate(request, GenerationOptions(diagnostic = true)) { p ->
+            val result = engine.generate(request, options) { p ->
                 last = p
                 if (p.phase == GenerationPhase.PREFILL) prefillObserved = true
                 if (samples.length() < 1210) {
@@ -100,6 +104,7 @@ class DiagnosticInferenceRuntimeTest {
             save()
             assertTrue("Native counters must identify the input context", last.promptTokens > 0)
             assertTrue("Elapsed time must be measured", last.elapsedMs > 0)
+            if (!options.diagnostic) assertEquals("PSS is diagnostic-only", 0, last.pssKiB)
             assertTrue(
                 "Live native phase must be observed",
                 prefillObserved || last.outputTokens > 0

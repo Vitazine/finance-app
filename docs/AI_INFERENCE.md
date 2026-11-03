@@ -8,7 +8,12 @@ Version 1.0 · status: provisional model path
 
 The optional debug adapter accepts separately supplied, exact-hash model assets.
 Weights, training data and system prompts are not distributed by this repository.
-The accepted artifact identity is described in [manifest](models/day07-iteration4.json).
+The current owner-selected artifact is Day9 iteration-1, described in
+[manifest](models/day09-iteration1.json). It continues the Day7 iteration-4 LoRA;
+the final adapter is fused directly with the pinned base, without stacking Day7.
+Its system prompt and chat template match the previous version byte for byte.
+The expense-only wire adapter and strict validation remain unchanged. A new
+versioned private directory preserves the old files and prevents silent fallback.
 Runtime availability does not establish model quality or acceptable latency.
 Production inference remains disabled pending independent evaluation and device tests.
 Keep adapter, prompt template, parser and asset selection independent. Re-evaluate
@@ -92,3 +97,9 @@ Normal app metrics are transient and are not written to logs or disk. Explicit
 instrumentation experiments use synthetic inputs and may save numeric-only local
 reports/screenshots; they do not access the user's ledger. Cancellation waits for
 the native worker before releasing resources. Late canceled callbacks are ignored.
+
+Ordinary requests also report phase, input-token progress, output-token count and
+elapsed time to a Material3 linear indicator. Only completed input decode batches
+have a known denominator; answer generation is indeterminate. Token cap is never
+presented as total answer length or overall completion. PSS and the600-second
+deadline remain diagnostic-only. The ordinary deadline is still120seconds.

@@ -50,13 +50,8 @@ internal class AutoLocalModelEngine(
             stage = ConnectionStage.FILES
             report(ModelConnection(stage))
             val root = privateRoot.canonicalFile
-            val paths = listOf(
-                "models/day07.gguf" to "models/system.txt",
-                "research/day07.gguf" to "research/system.txt"
-            )
-            val pair = paths.map { File(root, it.first) to File(root, it.second) }
-                .firstOrNull { it.first.exists() || it.second.exists() }
-                ?: return failed(ConnectionFailure.MODEL_MISSING)
+            val directory = File(root, "models/${NativeInferenceEngine.KEY}")
+            val pair = File(directory, "model.gguf") to File(directory, "system.txt")
             if (!pair.first.exists()) return failed(ConnectionFailure.MODEL_MISSING)
             if (!pair.second.exists()) return failed(ConnectionFailure.PROMPT_MISSING)
             for (file in listOf(pair.first, pair.second)) {
