@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.finance.android.R
 import app.finance.core.money.ExchangeRateQuote
+import app.finance.domain.exchange.CachedRate
 import app.finance.domain.ledger.LedgerError
 import kotlinx.datetime.Clock
 
@@ -28,10 +29,35 @@ import kotlinx.datetime.Clock
 private fun rateSource(quote: ExchangeRateQuote): String =
     if (quote.sourceId == "manual") stringResource(R.string.fx_source_manual) else quote.sourceId
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun RatePanel(state: LedgerUiState, model: LedgerViewModel) {
     val editor = state.editor ?: return
+    LocalRatePanel(
+        editor.fields,
+        state.busy,
+        editor.rateCandidate,
+        editor.rateNotice,
+        editor.rateProblem,
+        model::findRate,
+        model::rememberRate,
+        model::useRateCandidate
+    )
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun LocalRatePanel(
+    fields: EntryFields,
+    busy: Boolean,
+    candidate: CachedRate?,
+    notice: RateNotice?,
+    problem: LedgerError?,
+    onFind: () -> Unit,
+    onRemember: () -> Unit,
+    onUse: () -> Unit,
+    prefix: String = "fx"
+) {
+    fun tag(suffix: String) = "${prefix}_$suffix"
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     fun act(block: () -> Unit) {
@@ -43,41 +69,41 @@ internal fun RatePanel(state: LedgerUiState, model: LedgerViewModel) {
         Text(stringResource(R.string.fx_local), style = MaterialTheme.typography.bodySmall)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = {
-                act(model::findRate)
-            }, enabled = !state.busy, modifier = Modifier.testTag("fx_find")) {
+                act(onFind)
+            }, enabled = !busy, modifier = Modifier.testTag(tag("find"))) {
                 Text(stringResource(R.string.fx_find))
             }
             TextButton(
-                onClick = { act(model::rememberRate) },
+                onClick = { act(onRemember) },
                 enabled =
-                !state.busy && editor.fields.selectedQuote == null,
-                modifier = Modifier.testTag("fx_remember")
+                !busy && fields.selectedQuote == null,
+                modifier = Modifier.testTag(tag("remember"))
             ) {
                 Text(stringResource(R.string.fx_remember))
             }
         }
-        editor.fields.selectedQuote?.let { chosen ->
+        fields.selectedQuote?.let { chosen ->
             Text(
                 stringResource(
                     R.string.fx_applied,
-                    displayRateTime(chosen.effectiveAt, editor.fields.zoneId),
+                    displayRateTime(chosen.effectiveAt, fields.zoneId),
                     rateSource(chosen)
                 ),
-                modifier = Modifier.testTag("fx_applied")
+                modifier = Modifier.testTag(tag("applied"))
             )
         }
-        when (editor.rateNotice) {
+        when (notice) {
             RateNotice.SAVED -> Text(
                 stringResource(R.string.fx_saved),
-                modifier = Modifier.testTag("fx_saved")
+                modifier = Modifier.testTag(tag("saved"))
             )
             RateNotice.EMPTY -> Text(
                 stringResource(R.string.fx_empty),
-                modifier = Modifier.testTag("fx_empty")
+                modifier = Modifier.testTag(tag("empty"))
             )
             null -> Unit
         }
-        editor.rateProblem?.let { error ->
+        problem?.let { error ->
             ErrorText(
                 stringResource(
                     if (error ==
@@ -88,10 +114,10 @@ internal fun RatePanel(state: LedgerUiState, model: LedgerViewModel) {
                         R.string.fx_problem
                     }
                 ),
-                "fx_problem"
+                tag("problem")
             )
         }
-        editor.rateCandidate?.let { candidate ->
+        candidate?.let { candidate ->
             val quote = candidate.quote
             val now = Clock.System.now()
             val hours = (now - quote.effectiveAt).inWholeHours
@@ -108,35 +134,35 @@ internal fun RatePanel(state: LedgerUiState, model: LedgerViewModel) {
                             quote.rate.canonicalText,
                             quote.baseCurrency.code
                         ),
-                        modifier = Modifier.testTag("fx_candidate_rate")
+                        modifier = Modifier.testTag(tag("candidate_rate"))
                     )
                     Text(
                         stringResource(R.string.fx_source, rateSource(quote)),
-                        modifier = Modifier.testTag("fx_candidate_source")
+                        modifier = Modifier.testTag(tag("candidate_source"))
                     )
                     Text(
                         stringResource(
                             R.string.fx_date,
-                            displayRateTime(quote.effectiveAt, editor.fields.zoneId)
+                            displayRateTime(quote.effectiveAt, fields.zoneId)
                         ),
-                        modifier = Modifier.testTag("fx_candidate_date")
+                        modifier = Modifier.testTag(tag("candidate_date"))
                     )
                     Text(
                         stringResource(
                             R.string.fx_retrieved,
-                            displayRateTime(candidate.retrievedAt, editor.fields.zoneId)
+                            displayRateTime(candidate.retrievedAt, fields.zoneId)
                         ),
-                        modifier = Modifier.testTag("fx_candidate_retrieved")
+                        modifier = Modifier.testTag(tag("candidate_retrieved"))
                     )
                     val age = when {
                         now < quote.effectiveAt -> stringResource(R.string.fx_future)
                         hours == 0L -> stringResource(R.string.fx_age_recent)
                         else -> stringResource(R.string.fx_age_hours, hours)
                     }
-                    Text(age, modifier = Modifier.testTag("fx_candidate_age"))
+                    Text(age, modifier = Modifier.testTag(tag("candidate_age")))
                     Button(onClick = {
-                        act(model::useRateCandidate)
-                    }, enabled = !state.busy, modifier = Modifier.testTag("fx_use")) {
+                        act(onUse)
+                    }, enabled = !busy, modifier = Modifier.testTag(tag("use"))) {
                         Text(stringResource(R.string.fx_use))
                     }
                 }

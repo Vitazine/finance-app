@@ -29,14 +29,12 @@
     <string name="ledger_restore">Вернуть</string>
     <string name="ledger_rename">Переименовать</string>
     <string name="ledger_more_categories">Ещё категории</string>
-    <string name="ledger_local_time">Дата и время</string>
-    <string name="ledger_local_time_hint">Например: 22:15 2 ноября 2026</string>
+    <string name="ledger_local_time">Дата операции</string>
     <string name="ledger_choose_offset">При переводе часов это время встречается дважды. Выберите нужное вхождение.</string>
     <string name="ledger_first_occurrence">Первое вхождение</string>
     <string name="ledger_second_occurrence">Второе вхождение</string>
-    <string name="ledger_pick_date_time">Выбрать дату и время</string>
+    <string name="ledger_pick_date_time">Выбрать дату</string>
     <string name="ledger_calendar_fallback">Эту дату нельзя показать в календаре. Показана текущая дата; введённое значение изменится только после применения.</string>
-    <string name="ledger_next">Далее</string>
     <string name="ledger_rate">Курс: 1 %1$s = … %2$s</string>
     <string name="ledger_rate_hint">Укажите курс вручную или выберите сохранённый ниже</string>
     <string name="ledger_applied_rate">Курс исходной операции: %1$s · %2$s</string>
@@ -70,9 +68,9 @@
     <string name="ledger_err_rate">Введите положительный десятичный курс</string>
     <string name="ledger_err_category">Выберите категорию</string>
     <string name="ledger_err_note">Заметка: не более 2000 символов, без управляющих знаков</string>
-    <string name="ledger_err_time">Укажите корректные дату и время операции</string>
-    <string name="ledger_err_gap">Такого местного времени нет из-за перевода часов. Выберите другое.</string>
-    <string name="ledger_err_ambiguous">Выберите смещение UTC для повторяющегося времени</string>
+    <string name="ledger_err_time">Укажите корректную дату операции</string>
+    <string name="ledger_err_gap">Выбранная дата несовместима с внутренней отметкой времени из-за перевода часов. Выберите другую дату.</string>
+    <string name="ledger_err_ambiguous">Выберите первое или второе вхождение при переводе часов</string>
     <string name="ledger_err_filter">Проверьте даты и параметры фильтра</string>
     <string name="ledger_err_name">Имя категории: от 1 до 120 символов, без управляющих знаков</string>
     <string name="ledger_err_missing">Запись не найдена. Обновите данные.</string>

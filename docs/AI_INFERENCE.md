@@ -65,7 +65,10 @@ date-only output defaults to the request's current local time in the saved app z
 preserving the proposal date. A single explicit numeric time in one-operation text
 has priority; multiple ambiguous times require editing. Full edited timestamps are
 preserved. Defaults use the same frozen reference on confirmation/retry. The UI offers
-readable input and a date/time picker without zone or raw offset entry. This mapping
+a date-only calendar without clock/zone/offset input. Full time remains internal;
+selecting a different day retains clock precision and invalidates a cached FX choice.
+Ambiguous/invalid explicit times remain rejected; the UI asks to revise the source
+request or use manual entry. No hidden DST normalization is introduced. This mapping
 does not establish real-model accuracy or latency.
 
 ## 4. Evaluation
@@ -115,3 +118,13 @@ Model unavailable, OOM, timeout and native engine failure still unload and requi
 explicit reconnection. Editing a failed request must not reclassify the original
 generation failure as a load failure. Actual file/hash/load errors retain their
 connection-stage messages. Reconnection clears the previous generation error.
+
+## 8. Foreign-currency draft confirmation
+
+When source differs from the confirmed primary currency, the AI preview exposes
+manual FX and the same explicit local-cache workflow as the manual editor. It
+shows direction, source, effective/retrieval dates, age and exact base amount.
+Finding a cached quote does not apply it. The selected quote is frozen at confirm;
+currency/date edits invalidate it. No guessed1:1, live provider or unconfirmed ledger
+write is introduced. Missing FX remains a financial validation requirement, now
+resolvable in the preview. Same-currency drafts require no quote.

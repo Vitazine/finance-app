@@ -49,7 +49,7 @@ internal fun displayTime(entry: ManualEntry): String = try {
     val local = zoned(entry.occurredAt, entry.displayZoneId)
     displayLocalTime(local.toLocalDateTime().toString())
 } catch (_: DateTimeException) {
-    "${entry.occurredAt} · ${entry.displayZoneId}"
+    displayLocalDate(entry.occurredAt.toString().substringBefore('T')) + " · UTC"
 }
 
 internal fun filterDate(instant: Instant?, zone: String, exclusiveEnd: Boolean = false): String {
@@ -61,5 +61,5 @@ internal fun filterDate(instant: Instant?, zone: String, exclusiveEnd: Boolean =
 internal fun displayRateTime(instant: Instant, zone: String): String = try {
     displayLocalTime(zoned(instant, zone).toLocalDateTime().toString())
 } catch (_: DateTimeException) {
-    instant.toString() + " · " + zone
+    displayLocalDate(instant.toString().substringBefore('T')) + " · UTC"
 }

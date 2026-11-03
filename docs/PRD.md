@@ -46,8 +46,14 @@ model taxonomy; preserve user edits/archives/deletions and imported catalogs.
 Automatically preselect a uniquely resolved active AI category, keeping it editable.
 Owner refinement (2026-11-03): if an AI operation has no explicit time, use the
 request-time clock in the saved app zone while preserving its date. Explicit numeric
-time has priority; ambiguous times require editing. Show the chosen time before
-confirmation and freeze it across retries. Explicit confirmation remains mandatory.
+time has priority; ambiguous times require editing. Keep the chosen time internally
+and freeze it across retries.
+Owner refinement (2026-11-03, later): show operation dates only in UI, including
+AI preview, editor and history; remove clock input/picker. Retain the full internal
+timestamp/zone/precision for statistics, backup and posting. Date changes preserve
+the hidden clock; no silent DST normalization. Foreign AI drafts expose the existing
+manual/local saved-rate workflow and exact base-currency preview before confirm.
+Explicit confirmation remains mandatory.
 
 ## 4. Financial rules (normative)
 

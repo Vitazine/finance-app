@@ -29,7 +29,7 @@ class EntryInputTest {
 
     @Test fun readableDisplayAndNoteOnlyEditPreserveOriginalNanosecondInstant() {
         val original = build(fields().copy(localTime = "2026-11-02T22:15:03.123456789")).value()
-        assertEquals("22:15 2 ноября 2026", displayTime(original))
+        assertEquals("2 ноября 2026", displayTime(original))
         val edited = fieldsFor(original).copy(note = "Synthetic edited note")
         assertEquals(
             Instant.parse("2026-11-02T22:15:03.123456789Z"),

@@ -253,38 +253,19 @@ import app.finance.android.ledger.message
                                         { model.edit(p.index) { it.copy(categoryId = c.id) } }
                                 }
                             )
-                            Text(
-                                stringResource(
-                                    if (f.localTime.endsWith("T")) {
-                                        R.string.ai_time_ambiguous
-                                    } else {
-                                        R.string.ai_time_rule
-                                    }
-                                )
-                            )
+                            if (runCatching {
+                                    app.finance.android.ledger.parseLocalTime(f.localTime)
+                                }.isFailure
+                            ) {
+                                Text(stringResource(R.string.ai_time_ambiguous))
+                            }
                             EntryDateTimeField(f.localTime, "ai_time_${p.index}", !s.busy) { v ->
                                 model.edit(p.index) { it.withLocalTime(v) }
                             }
                             OccurrenceChoices(f, "ai_time_${p.index}", !s.busy) { offset ->
                                 model.edit(p.index) { it.copy(offset = offset) }
                             }
-                            if (f.currency !=
-                                s.draft!!.context.settings.primaryCurrency.code
-                            ) {
-                                LedgerField(
-                                    f.rate,
-                                    stringResource(
-                                        R.string.ai_manual_rate
-                                    ),
-                                    "ai_rate_${p.index}",
-                                    128,
-                                    !s.busy,
-                                    { v ->
-                                        model.edit(p.index) { it.withRate(v) }
-                                    },
-                                    decimal = true
-                                )
-                            }
+                            AiRatePanel(p, s.draft!!, s.busy, model)
                             LedgerField(
                                 f.note,
                                 stringResource(

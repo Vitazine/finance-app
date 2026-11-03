@@ -2,6 +2,7 @@ package app.finance.android
 
 import androidx.activity.ComponentActivity
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -72,8 +73,6 @@ class AiConfirmationUiTest {
             )
         }
         store = openLedgerStore(context, name)
-        val usd = (CurrencyCode.resolve("USD") as MoneyResult.Success).value
-        store.settings.initialize((LedgerSettings.create(usd, "UTC") as LedgerResult.Success).value)
         store.categories.create(
             (LedgerId.parse("00000000-0000-4000-8000-000000000001") as LedgerResult.Success).value,
             EntryType.EXPENSE,
@@ -104,7 +103,15 @@ class AiConfirmationUiTest {
             }
         }
     }
-    private fun render(output: String = raw, delay: Long = 0) {
+    private fun render(output: String = raw, delay: Long = 0, baseCurrency: String = "USD") {
+        runBlocking {
+            val base = (CurrencyCode.resolve(baseCurrency) as MoneyResult.Success).value
+            assertTrue(
+                store.settings.initialize(
+                    (LedgerSettings.create(base, "UTC") as LedgerResult.Success).value
+                ) is LedgerResult.Success
+            )
+        }
         val owner = object : ViewModelStoreOwner {
             override val viewModelStore = models
         }
@@ -179,12 +186,153 @@ class AiConfirmationUiTest {
         assertEquals(0L, count())
     }
 
+    @Test fun foreignUsdDraftShowsDirectionAndRequiresExplicitManualRate() {
+        render(baseCurrency = "RUB")
+        text("ai_prompt", "Synthetic taxi purchase")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        compose.onNodeWithTag("ai_rate_0").performScrollTo()
+            .assertTextContains("USD", substring = true)
+            .assertTextContains("RUB", substring = true)
+        click("ai_confirm_0")
+        waitTag("ai_input_error_0")
+        assertEquals(0L, count())
+        text("ai_rate_0", "90")
+        compose.onNodeWithTag(
+            "ai_fx_0_converted"
+        ).assertTextContains("1125.00 RUB", substring = true)
+        compose.onNodeWithTag("ai_fx_0_converted").performScrollTo()
+        saveProof("ai-fx-converted")
+        assertEquals(0L, count())
+        click("ai_confirm_0")
+        waitTag("ai_confirmed_0")
+        val row = runBlocking {
+            (store.transactions.history() as LedgerResult.Success).value.items.single().transaction
+        }
+        assertEquals(1250L, row.entry.conversion.sourceAmount.amountMinor)
+        assertEquals(112500L, row.entry.conversion.convertedMinor)
+    }
+
+    @Test fun savedFxIsOnlyAppliedAfterExplicitChoiceAndFreezesMetadata() {
+        val source = (CurrencyCode.resolve("USD") as MoneyResult.Success).value
+        val base = (CurrencyCode.resolve("RUB") as MoneyResult.Success).value
+        val quote = (
+            app.finance.core.money.ExchangeRateQuote.create(
+                source,
+                base,
+                (app.finance.core.money.DecimalRate.parse("90") as MoneyResult.Success).value,
+                kotlinx.datetime.Instant.parse("2026-11-01T00:00:00Z"),
+                "synthetic:offline"
+            ) as MoneyResult.Success
+            ).value
+        runBlocking {
+            store.rates.put(
+                app.finance.domain.exchange.CachedRate(
+                    quote,
+                    kotlinx.datetime.Instant.parse("2026-11-01T12:00:00Z")
+                )
+            )
+        }
+        render(baseCurrency = "RUB")
+        text("ai_prompt", "Synthetic taxi purchase")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        click("ai_fx_0_find")
+        waitTag("ai_fx_0_candidate_rate")
+        assertEquals("", ai.state.value.previews.single().fields.rate)
+        assertEquals(0L, count())
+        saveProof("ai-fx-candidate")
+        click("ai_fx_0_use")
+        val selected = ai.state.value.previews.single().fields.selectedQuote!!
+        assertEquals(quote.effectiveAt, selected.effectiveAt)
+        assertEquals(quote.sourceId, selected.sourceId)
+        assertEquals(quote.rate.canonicalText, selected.rate.canonicalText)
+        click("ai_confirm_0")
+        waitTag("ai_confirmed_0")
+        val stored = runBlocking {
+            (store.transactions.history() as LedgerResult.Success).value.items.single().transaction
+        }
+        assertEquals("synthetic:offline", stored.entry.conversion.sourceId)
+        assertEquals(quote.effectiveAt, stored.entry.conversion.effectiveAt)
+        assertEquals(112500L, stored.entry.conversion.convertedMinor)
+    }
+
+    @Test fun emptyCacheAllowsRememberingManualFxWithoutPosting() {
+        render(baseCurrency = "RUB")
+        text("ai_prompt", "Synthetic purchase")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        click("ai_fx_0_find")
+        waitTag("ai_fx_0_empty")
+        assertEquals("", ai.state.value.previews.single().fields.rate)
+        text("ai_rate_0", "90")
+        click("ai_fx_0_remember")
+        waitTag("ai_fx_0_saved")
+        assertEquals(0L, count())
+        click("ai_fx_0_find")
+        waitTag("ai_fx_0_candidate_rate")
+        assertEquals(null, ai.state.value.previews.single().fields.selectedQuote)
+        assertEquals(0L, count())
+    }
+
+    @Test fun editingCurrencyOrDateInvalidatesFxAndFutureQuoteIsExcluded() {
+        val source = (CurrencyCode.resolve("USD") as MoneyResult.Success).value
+        val base = (CurrencyCode.resolve("RUB") as MoneyResult.Success).value
+        val quote = (
+            app.finance.core.money.ExchangeRateQuote.create(
+                source,
+                base,
+                (app.finance.core.money.DecimalRate.parse("90") as MoneyResult.Success).value,
+                kotlinx.datetime.Instant.parse("2026-11-01T00:00:00Z"),
+                "synthetic:offline"
+            ) as MoneyResult.Success
+            ).value
+        runBlocking {
+            store.rates.put(
+                app.finance.domain.exchange.CachedRate(
+                    quote,
+                    kotlinx.datetime.Instant.parse("2026-11-01T12:00:00Z")
+                )
+            )
+        }
+        render(baseCurrency = "RUB")
+        text("ai_prompt", "Synthetic purchase")
+        click("ai_generate")
+        waitTag("ai_amount_0")
+        click("ai_fx_0_find")
+        waitTag("ai_fx_0_candidate_rate")
+        click("ai_fx_0_use")
+        compose.runOnUiThread { ai.edit(0) { it.withCurrency("EUR") } }
+        assertEquals(null, ai.state.value.previews.single().fields.selectedQuote)
+        assertEquals(null, ai.state.value.previews.single().rateCandidate)
+        assertEquals("", ai.state.value.previews.single().fields.rate)
+        compose.runOnUiThread {
+            ai.edit(0) {
+                it.withCurrency("USD").withLocalTime(
+                    app.finance.android.ledger.replaceOccurrenceDate(
+                        it.localTime,
+                        java.time.LocalDate.of(2026, 10, 31)
+                    )
+                )
+            }
+        }
+        click("ai_fx_0_find")
+        waitTag("ai_fx_0_empty")
+        assertEquals(0L, count())
+    }
+
     @Test fun missingTimeUsesRequestTimeAndCanBeExplicitlyConfirmed() {
         render()
         text("ai_prompt", "Synthetic purchase")
         click("ai_generate")
         waitTag("ai_amount_0")
-        compose.onNodeWithTag("ai_time_0").assertTextContains("12:34 2 ноября 2026")
+        compose.onNodeWithTag("ai_time_0").assertTextContains("2 ноября 2026")
+        compose.onNodeWithTag("ai_rate_0").assertDoesNotExist()
+        assertEquals(
+            "2 ноября 2026",
+            compose.onNodeWithTag("ai_time_0")
+                .fetchSemanticsNode().config[SemanticsProperties.EditableText].text
+        )
         assertEquals(0L, count())
         click("ai_confirm_0")
         waitTag("ai_confirmed_0")
@@ -203,7 +351,8 @@ class AiConfirmationUiTest {
         text("ai_prompt", "Synthetic purchase at 22:15")
         click("ai_generate")
         waitTag("ai_amount_0")
-        compose.onNodeWithTag("ai_time_0").assertTextContains("22:15 2 ноября 2026")
+        compose.onNodeWithTag("ai_time_0").assertTextContains("2 ноября 2026")
+        assertEquals("2026-11-02T22:15", ai.state.value.previews.single().fields.localTime)
         assertEquals(0L, count())
     }
 
@@ -224,7 +373,16 @@ class AiConfirmationUiTest {
         text("ai_prompt", "Synthetic purchase")
         click("ai_generate")
         waitTag("ai_amount_0")
-        text("ai_time_0", "1 ноября 2026")
+        compose.runOnUiThread {
+            ai.edit(0) {
+                it.withLocalTime(
+                    app.finance.android.ledger.replaceOccurrenceDate(
+                        it.localTime,
+                        java.time.LocalDate.of(2026, 11, 1)
+                    )
+                )
+            }
+        }
         click("ai_confirm_0")
         waitTag("ai_confirmed_0")
         assertEquals(1L, count())
@@ -263,11 +421,11 @@ class AiConfirmationUiTest {
         assertEquals(0L, count())
         text("ai_amount_0", "15.00")
         assertEquals(0L, count())
-        text("ai_time_0", "invalid")
+        compose.runOnUiThread { ai.edit(0) { it.withLocalTime("invalid") } }
         click("ai_confirm_0")
         waitTag("ai_input_error_0")
         assertEquals(0L, count())
-        text("ai_time_0", "2026-11-02T12:00:00")
+        compose.runOnUiThread { ai.edit(0) { it.withLocalTime("2026-11-02T12:00:00") } }
         click("ai_confirm_0")
         waitTag("ai_confirmed_0")
         saveProof("ai-confirmed")

@@ -14,6 +14,7 @@ import app.finance.ai.parser.AiDraftParser
 import app.finance.android.ledger.EntryFields
 import app.finance.android.ledger.InputResult
 import app.finance.android.ledger.buildEntry
+import app.finance.android.ledger.matchesRequest
 import app.finance.data.repository.LedgerStore
 import app.finance.domain.ledger.LedgerError
 import app.finance.domain.ledger.LedgerId
@@ -45,7 +46,10 @@ internal data class AiPreview(
     val confirmed: Boolean = false,
     val canceled: Boolean = false,
     val inputError: InputResult.Failure? = null,
-    val ledgerError: LedgerError? = null
+    val ledgerError: LedgerError? = null,
+    val rateCandidate: app.finance.domain.exchange.CachedRate? = null,
+    val rateProblem: LedgerError? = null,
+    val rateNotice: app.finance.android.ledger.RateNotice? = null
 ) {
     override fun toString() = "AiPreview"
 }
@@ -457,12 +461,185 @@ internal class AiViewModel(
                         !p.confirmed &&
                         !p.canceled
                     ) {
-                        p.copy(fields = change(p.fields), inputError = null, ledgerError = null)
+                        val next = change(p.fields)
+                        val old = p.fields
+                        val pairChanged = next.currency.trim().uppercase() !=
+                            old.currency.trim().uppercase()
+                        val timeChanged = next.localTime != old.localTime ||
+                            next.zoneId != old.zoneId ||
+                            next.offset != old.offset
+                        val changed = pairChanged || timeChanged
+                        val manualEdit =
+                            next.rate != old.rate && next.selectedQuote === old.selectedQuote
+                        p.copy(
+                            fields = next.copy(
+                                rate = if (pairChanged ||
+                                    (timeChanged && old.selectedQuote != null)
+                                ) {
+                                    ""
+                                } else {
+                                    next.rate
+                                },
+                                selectedQuote = if (changed ||
+                                    manualEdit
+                                ) {
+                                    null
+                                } else {
+                                    next.selectedQuote
+                                }
+                            ),
+                            inputError = null,
+                            ledgerError = null,
+                            rateCandidate = if (changed) null else p.rateCandidate,
+                            rateNotice = null,
+                            rateProblem = null
+                        )
                     } else {
                         p
                     }
                 }
             )
+        }
+    }
+    private fun rateAction(index: Int, block: suspend (AiDraft, AiPreview) -> AiPreview) {
+        val s = state.value
+        if (s.busy) return
+        val draft = s.draft ?: return
+        val preview =
+            s.previews.singleOrNull { it.index == index && !it.confirmed && !it.canceled } ?: return
+        mutable.update { it.copy(busy = true) }
+        viewModelScope.launch {
+            try {
+                val updated = withContext(Dispatchers.IO) { block(draft, preview) }
+                mutable.update { current ->
+                    if (current.draft?.id != draft.id) {
+                        current
+                    } else {
+                        current.copy(
+                            previews = current.previews.map {
+                                if (it.id ==
+                                    preview.id
+                                ) {
+                                    updated
+                                } else {
+                                    it
+                                }
+                            }
+                        )
+                    }
+                }
+            } catch (cancel: CancellationException) {
+                throw cancel
+            } catch (_: Exception) {
+                mutable.update { current ->
+                    current.copy(
+                        previews = current.previews.map {
+                            if (it.id ==
+                                preview.id
+                            ) {
+                                it.copy(rateProblem = LedgerError.STORAGE_FAILURE)
+                            } else {
+                                it
+                            }
+                        }
+                    )
+                }
+            } finally {
+                mutable.update { it.copy(busy = false) }
+            }
+        }
+    }
+    fun findRate(index: Int) = rateAction(index) { draft, preview ->
+        when (
+            val request = app.finance.android.ledger.rateRequest(
+                preview.fields,
+                draft.context.settings
+            )
+        ) {
+            is InputResult.Failure -> preview.copy(inputError = request)
+            is InputResult.Success -> when (
+                val found = store.rates.latest(
+                    request.value.pair,
+                    request.value.notAfter
+                )
+            ) {
+                is LedgerResult.Failure -> preview.copy(
+                    rateCandidate = null,
+                    rateProblem = found.error
+                )
+                is LedgerResult.Success -> {
+                    val rate = found.value
+                    if (rate != null && !rate.matchesRequest(request.value)) {
+                        preview.copy(rateCandidate = null, rateProblem = LedgerError.CORRUPT_DATA)
+                    } else {
+                        preview.copy(
+                            rateCandidate = rate,
+                            rateProblem = null,
+                            inputError = null,
+                            rateNotice = if (rate ==
+                                null
+                            ) {
+                                app.finance.android.ledger.RateNotice.EMPTY
+                            } else {
+                                null
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    }
+    fun rememberRate(index: Int) = rateAction(index) { draft, preview ->
+        when (
+            val input = app.finance.android.ledger.manualRateInput(
+                preview.fields,
+                draft.context.settings,
+                clock.now()
+            )
+        ) {
+            is InputResult.Failure -> preview.copy(inputError = input)
+            is InputResult.Success -> when (val saved = store.rates.put(input.value)) {
+                is LedgerResult.Failure -> preview.copy(rateProblem = saved.error)
+                is LedgerResult.Success -> {
+                    val wanted = input.value.quote
+                    val got = saved.value.quote
+                    val problem = when {
+                        got.sourceCurrency != wanted.sourceCurrency ||
+                            got.baseCurrency != wanted.baseCurrency ||
+                            got.effectiveAt != wanted.effectiveAt ||
+                            got.sourceId != wanted.sourceId -> LedgerError.CORRUPT_DATA
+                        got.rate != wanted.rate -> LedgerError.CONFLICT
+                        else -> null
+                    }
+                    preview.copy(
+                        inputError = null,
+                        rateProblem = problem,
+                        rateNotice = if (problem ==
+                            null
+                        ) {
+                            app.finance.android.ledger.RateNotice.SAVED
+                        } else {
+                            null
+                        }
+                    )
+                }
+            }
+        }
+    }
+    fun useRateCandidate(index: Int) {
+        val s = state.value
+        if (s.busy) return
+        val draft = s.draft ?: return
+        val preview =
+            s.previews.singleOrNull { it.index == index && !it.confirmed && !it.canceled } ?: return
+        val candidate = preview.rateCandidate ?: return
+        val request = app.finance.android.ledger.rateRequest(
+            preview.fields,
+            draft.context.settings
+        )
+        if (request !is InputResult.Success || !candidate.matchesRequest(request.value)) return
+        edit(index) {
+            it.copy(rate = candidate.quote.rate.canonicalText, selectedQuote = candidate.quote)
         }
     }
     fun discard(index: Int) {

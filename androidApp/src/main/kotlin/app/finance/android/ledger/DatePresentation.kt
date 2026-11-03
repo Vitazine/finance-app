@@ -27,11 +27,19 @@ internal fun parseLocalDate(text: String): LocalDate = try {
     LocalDate.parse(text, humanDay)
 }
 
-internal fun displayLocalTime(text: String): String = try {
-    parseLocalTime(text).format(humanTime)
-} catch (_: DateTimeException) {
-    // Keep incomplete date-only edits readable until their time is resolved on confirmation.
-    if (text.endsWith("T")) displayLocalDate(text.dropLast(1)) else text
+internal fun occurrenceDate(text: String): LocalDate? = runCatching {
+    parseLocalTime(text).toLocalDate()
+}.getOrNull() ?: runCatching { parseLocalDate(text.substringBefore('T')) }.getOrNull()
+
+/** UI shows the day; the original clock/offset/nanoseconds remain in EntryFields. */
+internal fun displayLocalTime(text: String): String =
+    occurrenceDate(text)?.format(humanDay).orEmpty()
+
+internal fun replaceOccurrenceDate(value: String, date: LocalDate): String {
+    if (occurrenceDate(value) == date) return value
+    val time = runCatching { parseLocalTime(value).toLocalTime() }.getOrNull()
+    return time?.let { date.atTime(it).toString() }
+        ?: (date.toString() + "T" + value.substringAfter('T', ""))
 }
 
 internal fun displayLocalDate(text: String): String = try {

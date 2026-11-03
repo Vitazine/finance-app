@@ -184,7 +184,7 @@ class LedgerUiTest {
         click("home_add")
         compose.runOnUiThread { model.fields { it.withLocalTime("0000-11-02T22:15") } }
         click("editor_time_picker")
-        waitTag("editor_time_date_next")
+        waitTag("editor_time_date_apply")
         click("editor_time_picker_cancel")
         assertEquals("0000-11-02T22:15", model.state.value.editor!!.fields.localTime)
         assertEquals(0, historyRows().size)
@@ -199,21 +199,17 @@ class LedgerUiTest {
         compose.runOnUiThread {
             model.fields { it.withLocalTime("2026-11-02T22:15:03.123456789") }
         }
-        compose.onNodeWithTag("editor_time").assertTextContains("22:15 2 ноября 2026")
+        compose.onNodeWithTag("editor_time").assertTextContains("2 ноября 2026")
         click("editor_time_picker")
-        waitTag("editor_time_date_next")
-        saveProof("readable-calendar")
-        click("editor_time_date_next")
-        waitTag("editor_time_time_save")
-        saveProof("readable-clock")
+        waitTag("editor_time_date_apply")
+        saveProof("date-only-calendar")
         click("editor_time_picker_cancel")
         assertEquals("2026-11-02T22:15:03.123456789", model.state.value.editor!!.fields.localTime)
         click("editor_time_picker")
-        waitTag("editor_time_date_next")
-        click("editor_time_date_next")
-        waitTag("editor_time_time_save")
-        click("editor_time_time_save")
-        assertEquals("2026-11-02T22:15", model.state.value.editor!!.fields.localTime)
+        waitTag("editor_time_date_apply")
+        click("editor_time_date_apply")
+        assertEquals("2026-11-02T22:15:03.123456789", model.state.value.editor!!.fields.localTime)
+        compose.onNodeWithTag("editor_time_time_save").assertDoesNotExist()
         assertEquals(0, historyRows().size)
         click("editor_cancel")
     }

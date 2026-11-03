@@ -50,3 +50,8 @@ internal fun manualRateInput(
         is MoneyResult.Success -> InputResult.Success(CachedRate(quote.value, now))
     }
 }
+
+internal fun CachedRate.matchesRequest(request: RateRequest): Boolean =
+    quote.sourceCurrency == request.pair.source &&
+        quote.baseCurrency == request.pair.base &&
+        quote.effectiveAt <= request.notAfter

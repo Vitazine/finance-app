@@ -298,7 +298,7 @@ class KeyboardVisibilityTest {
         render()
         editEntry()
         verifyFields(
-            listOf("editor_amount", "editor_currency", "editor_rate", "editor_time", "editor_note")
+            listOf("editor_amount", "editor_currency", "editor_rate", "editor_note")
         )
         assertVisible("editor_save")
         assertVisible("editor_cancel")
@@ -352,7 +352,6 @@ class KeyboardVisibilityTest {
             listOf(
                 "ai_amount_0",
                 "ai_currency_0",
-                "ai_time_0",
                 "ai_rate_0",
                 "ai_note_0"
             )
@@ -385,7 +384,7 @@ class KeyboardVisibilityTest {
         render()
         editEntry()
         verifyFields(
-            listOf("editor_amount", "editor_currency", "editor_rate", "editor_time", "editor_note")
+            listOf("editor_amount", "editor_currency", "editor_rate", "editor_note")
         )
         val paragraph = (1..8).joinToString("\n") { "Synthetic line $it" }
         compose.onNodeWithTag("editor_note").performTextReplacement(paragraph)

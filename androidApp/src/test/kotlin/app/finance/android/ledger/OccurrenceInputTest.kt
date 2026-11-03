@@ -11,7 +11,7 @@ class OccurrenceInputTest {
 
     @Test fun humanDateUsesRussianMonthWithoutExposingZoneOrOffset() {
         assertEquals(
-            "22:15 2 ноября 2026",
+            "2 ноября 2026",
             displayRateTime(Instant.parse("2026-11-02T14:15:03.123456789Z"), "Asia/Manila")
         )
     }

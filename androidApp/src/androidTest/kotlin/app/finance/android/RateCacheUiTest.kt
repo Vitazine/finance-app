@@ -121,12 +121,17 @@ class RateCacheUiTest {
     private fun text(tag: String, value: String) {
         bring(tag).performTextReplacement(value)
     }
+
+    // Internal precision fixture: operation dates are read-only in the UI now.
+    private fun occurrence(value: String) {
+        compose.runOnUiThread { model.fields { it.withLocalTime(value) } }
+    }
     private fun foreign(time: String = "2026-11-01T02:02:03.123456789") {
         waitTag("home_add")
         click("home_add")
         text("editor_amount", "1.245")
         text("editor_currency", "KWD")
-        text("editor_time", time)
+        occurrence(time)
         click("editor_category")
         compose.onNode(hasText("Cache expense") and hasClickAction()).performClick()
     }
@@ -232,14 +237,14 @@ class RateCacheUiTest {
         click("fx_use")
         text("editor_amount", "2.00")
         assertNotNull(model.state.value.editor!!.fields.selectedQuote)
-        text("editor_time", "2026-10-31T02:02:03")
+        occurrence("2026-10-31T02:02:03")
         assertNull(model.state.value.editor!!.rateCandidate)
         assertNull(model.state.value.editor!!.fields.selectedQuote)
         assertEquals("", model.state.value.editor!!.fields.rate)
         click("fx_find")
         idle()
         assertEquals(RateNotice.EMPTY, model.state.value.editor!!.rateNotice)
-        text("editor_time", "2026-11-01T02:02:03")
+        occurrence("2026-11-01T02:02:03")
         click("fx_find")
         idle()
         click("fx_use")

@@ -90,3 +90,10 @@ Open risks and decisions: <items>
 ```
 
 If a check cannot execute (e.g., no 8+ GB device), document an explicit gate and do not invent a substitute.
+
+Date-only follow-up: read-only operation day/calendar in editor and AI, no clock
+picker. Same-day apply/cancel and note-only edits preserve exact timestamps;
+changing the day retains hidden clock/nanoseconds and invalidates cached FX.
+Explicit DST folds/gaps remain validated. Foreign AI confirmation tests cover
+manual rate, cache find/explicit use/remember, empty cache, stale choice invalidation,
+future quote exclusion, exact frozen conversion and zero writes before confirmation.
