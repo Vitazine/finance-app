@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
@@ -50,15 +51,24 @@ internal fun LedgerField(
     decimal: Boolean = false,
     multiline: Boolean = false,
     readOnly: Boolean = false,
-    imeAction: ImeAction? = null
+    imeAction: ImeAction? = null,
+    error: String? = null
 ) {
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val compact = keyboardOpen &&
         LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
     OutlinedTextField(
         value = value, onValueChange = { onChange(it.take(limit + 1)) },
-        label = { Text(label) }, supportingText = hint?.let { { Text(it) } },
-        modifier = Modifier.fillMaxWidth().keepFocusedInputVisible().testTag(tag),
+        label = { Text(label) },
+        supportingText = if (error != null) {
+            { ErrorText(error, "${tag}_error") }
+        } else {
+            hint?.let { { Text(it) } }
+        },
+        isError = error != null,
+        modifier = Modifier.fillMaxWidth().keepFocusedInputVisible().testTag(tag).semantics {
+            if (error != null) error(error)
+        },
         enabled = enabled, readOnly = readOnly,
         singleLine = !multiline,
         minLines = if (multiline && !compact) 3 else 1,
