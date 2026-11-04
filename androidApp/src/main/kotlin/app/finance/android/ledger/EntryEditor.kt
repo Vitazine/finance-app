@@ -83,7 +83,10 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
                 model.fields { it.copy(amount = text) }
             },
             stringResource(R.string.ledger_amount_hint),
-            decimal = true
+            decimal = true,
+            error = state.editorIssue?.issue?.takeIf {
+                it == InputIssue.INVALID_AMOUNT || it == InputIssue.AMOUNT_OVERFLOW
+            }?.let { stringResource(it.message()) }
         )
         LedgerField(
             fields.currency,

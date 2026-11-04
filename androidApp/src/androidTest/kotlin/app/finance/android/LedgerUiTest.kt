@@ -1,5 +1,8 @@
 package app.finance.android
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextContains
@@ -282,6 +285,58 @@ class LedgerUiTest {
         click("delete_confirm")
         waitTag("history_empty")
         assertEquals(0L, runBlocking { store.transactions.overview().value().balance.amountMinor })
+    }
+
+    @Test
+    fun amountErrorAppearsAtFieldAndClearsAfterCorrectionInBothThemes() {
+        seedReady()
+        val dark = androidx.compose.runtime.mutableStateOf(false)
+        render(dark)
+        waitTag("home_add")
+        click("home_add")
+        click("editor_category")
+        compose.onNode(hasText("Synthetic expense") and hasClickAction()).performClick()
+        for (darkTheme in listOf(false, true)) {
+            compose.runOnIdle { dark.value = darkTheme }
+            for (invalid in listOf("0", "92233720368547758.08")) {
+                text("editor_amount", invalid)
+                click("editor_save")
+                waitTag("editor_error")
+                val message = context.getString(
+                    if (invalid == "0") R.string.ledger_err_amount else R.string.ledger_err_overflow
+                )
+                bring("editor_amount")
+                compose.onNodeWithTag("editor_amount_error", useUnmergedTree = true)
+                    .assertIsDisplayed().assertTextEquals(message)
+                compose.onNodeWithTag("editor_amount")
+                    .assert(SemanticsMatcher.expectValue(SemanticsProperties.Error, message))
+                compose.onNodeWithTag("editor_error").assertIsDisplayed().assertTextEquals(message)
+                assertEquals(0, historyRows().size)
+                saveProof("backlog-001-" + darkTheme + "-" + invalid.take(1))
+                text("editor_amount", "1.00")
+                compose.onNodeWithTag(
+                    "editor_amount_error",
+                    useUnmergedTree = true
+                ).assertDoesNotExist()
+                compose.onNodeWithTag("editor_amount")
+                    .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Error))
+                compose.onNodeWithTag("editor_error").assertDoesNotExist()
+            }
+        }
+        text("editor_currency", "EUR")
+        click("editor_save")
+        waitTag("editor_error")
+        compose.onNodeWithTag("editor_amount_error", useUnmergedTree = true).assertDoesNotExist()
+        compose.onNodeWithTag("editor_amount")
+            .assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.Error))
+        assertEquals(0, historyRows().size)
+        text("editor_currency", "USD")
+        click("editor_save")
+        waitTag("home_balance")
+        assertEquals(
+            100L,
+            historyRows().single().transaction.entry.conversion.sourceAmount.amountMinor
+        )
     }
 
     @Test
