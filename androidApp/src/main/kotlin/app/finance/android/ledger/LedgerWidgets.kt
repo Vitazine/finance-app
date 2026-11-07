@@ -52,7 +52,8 @@ internal fun LedgerField(
     multiline: Boolean = false,
     readOnly: Boolean = false,
     imeAction: ImeAction? = null,
-    error: String? = null
+    error: String? = null,
+    modifier: Modifier = Modifier
 ) {
     val keyboardOpen = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     val compact = keyboardOpen &&
@@ -66,7 +67,7 @@ internal fun LedgerField(
             hint?.let { { Text(it) } }
         },
         isError = error != null,
-        modifier = Modifier.fillMaxWidth().keepFocusedInputVisible().testTag(tag).semantics {
+        modifier = modifier.fillMaxWidth().keepFocusedInputVisible().testTag(tag).semantics {
             if (error != null) error(error)
         },
         enabled = enabled, readOnly = readOnly,
@@ -101,10 +102,11 @@ internal fun ChoiceMenu(
     label: String,
     tag: String,
     enabled: Boolean,
-    choices: List<Pair<String, () -> Unit>>
+    choices: List<Pair<String, () -> Unit>>,
+    modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
-    Box {
+    Box(modifier) {
         OutlinedButton(
             onClick = {
                 expanded = true

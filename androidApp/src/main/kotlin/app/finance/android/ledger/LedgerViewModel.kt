@@ -467,7 +467,13 @@ internal class LedgerViewModel(
         val now = Clock.System.now()
         val input = buildEntry(editor.fields, settings, editor.original, editor.id, now)
         if (input is InputResult.Failure) {
-            mutable.update { it.copy(editorIssue = input) }
+            mutable.update {
+                it.copy(
+                    editorIssue = input,
+                    editorSaveAttempt =
+                    it.editorSaveAttempt + 1
+                )
+            }
             return
         }
         action {

@@ -86,7 +86,12 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
             decimal = true,
             error = state.editorIssue?.issue?.takeIf {
                 it == InputIssue.INVALID_AMOUNT || it == InputIssue.AMOUNT_OVERFLOW
-            }?.let { stringResource(it.message()) }
+            }?.let { stringResource(it.message()) },
+            modifier = Modifier.revealEditorIssue(
+                state,
+                InputIssue.INVALID_AMOUNT,
+                InputIssue.AMOUNT_OVERFLOW
+            )
         )
         LedgerField(
             fields.currency,
@@ -99,7 +104,8 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
             { text ->
                 model.fields { it.withCurrency(text) }
             },
-            stringResource(R.string.ledger_iso_hint)
+            stringResource(R.string.ledger_iso_hint),
+            modifier = Modifier.revealEditorIssue(state, InputIssue.INVALID_CURRENCY)
         )
         val current =
             editor.selectedCategory ?: state.categories.find { it.id == fields.categoryId }
@@ -125,7 +131,8 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
             }.map { category ->
                 category.name to
                     { model.fields { it.copy(categoryId = category.id) } }
-            }
+            },
+            modifier = Modifier.revealEditorIssue(state, InputIssue.MISSING_CATEGORY)
         )
         TextButton(onClick = {
             model.categoryDialog(fields.type, fromEditor = true)
@@ -155,7 +162,12 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
                     model.fields { it.withRate(text) }
                 },
                 stringResource(R.string.ledger_rate_hint),
-                decimal = true
+                decimal = true,
+                modifier = Modifier.revealEditorIssue(
+                    state,
+                    InputIssue.MISSING_RATE,
+                    InputIssue.INVALID_RATE
+                )
             )
             editor.original?.entry?.conversion?.takeIf {
                 it.sourceCurrency.code ==
@@ -176,11 +188,21 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
         ) {
             RatePanel(state, model)
         }
-        EntryDateTimeField(fields.localTime, "editor_time", !state.busy) { text ->
-            model.fields { it.withLocalTime(text) }
-        }
-        OccurrenceChoices(fields, "editor_time", !state.busy) { offset ->
-            model.fields { it.copy(offset = offset) }
+        Column(
+            Modifier.revealEditorIssue(
+                state,
+                InputIssue.INVALID_TIME,
+                InputIssue.TIME_GAP,
+                InputIssue.TIME_AMBIGUOUS
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            EntryDateTimeField(fields.localTime, "editor_time", !state.busy) { text ->
+                model.fields { it.withLocalTime(text) }
+            }
+            OccurrenceChoices(fields, "editor_time", !state.busy) { offset ->
+                model.fields { it.copy(offset = offset) }
+            }
         }
         LedgerField(
             fields.note,
@@ -193,7 +215,8 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
             { text ->
                 model.fields { it.copy(note = text) }
             },
-            multiline = true
+            multiline = true,
+            modifier = Modifier.revealEditorIssue(state, InputIssue.INVALID_NOTE)
         )
     }
 }

@@ -61,6 +61,7 @@ internal data class LedgerUiState(
     val filter: LedgerFilter = LedgerFilter.ALL,
     val editor: EditorState? = null,
     val editorIssue: InputResult.Failure? = null,
+    val editorSaveAttempt: Long = 0,
     val categoryDialog: CategoryDialogState? = null,
     val deleteTransaction: StoredTransaction? = null,
     val deleteCategory: Category? = null

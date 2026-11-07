@@ -108,12 +108,10 @@ class RateCacheUiTest {
     private fun bring(tag: String): androidx.compose.ui.test.SemanticsNodeInteraction {
         idle()
         val node = compose.onNodeWithTag(tag)
-        try {
-            node.assertIsDisplayed()
-        } catch (_: AssertionError) {
-            node.performScrollTo()
-        }
-        return node
+        val scrollable = generateSequence(node.fetchSemanticsNode().parent) { it.parent }
+            .any { it.config.contains(androidx.compose.ui.semantics.SemanticsActions.ScrollBy) }
+        if (scrollable) node.performScrollTo()
+        return node.assertIsDisplayed()
     }
     private fun click(tag: String) {
         bring(tag).performClick()
