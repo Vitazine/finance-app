@@ -5,6 +5,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotDisplayed
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasClickAction
@@ -25,6 +26,7 @@ import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewModelScope
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.test.platform.app.InstrumentationRegistry
+import app.finance.android.ledger.InputIssue
 import app.finance.android.ledger.LedgerViewModel
 import app.finance.core.money.ConversionSnapshot
 import app.finance.core.money.CurrencyCode
@@ -78,7 +80,10 @@ class LedgerUiTest {
         store.close()
         context.deleteDatabase(name)
     }
-    private fun render(dark: androidx.compose.runtime.State<Boolean>? = null) {
+    private fun render(
+        dark: androidx.compose.runtime.State<Boolean>? = null,
+        fontScale: Float = 1f
+    ) {
         val owner = object : ViewModelStoreOwner {
             override val viewModelStore = models
         }
@@ -96,7 +101,16 @@ class LedgerUiTest {
         model = ViewModelProvider(owner, factory)[LedgerViewModel::class.java]
         compose.setContent {
             FinanceTheme(dark?.value ?: androidx.compose.foundation.isSystemInDarkTheme()) {
-                FinanceApp(model)
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                androidx.compose.runtime.CompositionLocalProvider(
+                    androidx.compose.ui.platform.LocalDensity provides
+                        androidx.compose.ui.unit.Density(
+                            density.density,
+                            fontScale
+                        )
+                ) {
+                    FinanceApp(model)
+                }
             }
         }
     }
@@ -285,6 +299,106 @@ class LedgerUiTest {
         click("delete_confirm")
         waitTag("history_empty")
         assertEquals(0L, runBlocking { store.transactions.overview().value().balance.amountMinor })
+    }
+
+    @Test
+    fun failedSaveRevealsAmountAgainAfterManualScrollWithoutPosting() {
+        seedReady()
+        render()
+        waitTag("home_add")
+        click("home_add")
+        click("editor_category")
+        compose.onNode(hasText("Synthetic expense") and hasClickAction()).performClick()
+        text("editor_amount", "0")
+        // A tall note makes the amount genuinely off-screen before Save.
+        text("editor_note", "Synthetic line\n".repeat(50))
+        repeat(2) {
+            compose.onNodeWithTag("editor_note").performScrollTo()
+            compose.onNodeWithTag("editor_amount").assertIsNotDisplayed()
+            click("editor_save")
+            waitTag("editor_error")
+            compose.onNodeWithTag("editor_amount").assertIsDisplayed()
+            compose.onNodeWithTag("editor_amount_error", useUnmergedTree = true).assertIsDisplayed()
+            assertEquals(0, historyRows().size)
+        }
+        saveProof("backlog-002-amount")
+        text("editor_amount", "1.00")
+        click("editor_save")
+        waitTag("home_balance")
+        assertEquals(
+            100L,
+            historyRows().single().transaction.entry.conversion.sourceAmount.amountMinor
+        )
+    }
+
+    @Test
+    fun failedSaveRevealsValidationFieldWithLargeTextInBothThemes() {
+        seedReady()
+        val dark = androidx.compose.runtime.mutableStateOf(false)
+        render(dark, fontScale = 2f)
+        waitTag("home_add")
+        click("home_add")
+        val valid = model.state.value.editor!!.fields.copy(
+            amount = "1.00",
+            currency = "EUR",
+            categoryId = id(1),
+            rate = "1",
+            localTime = "2026-11-01T12:00",
+            zoneId = "UTC",
+            offset = null,
+            note = "Synthetic line\n".repeat(50)
+        )
+        val cases = listOf(
+            Triple(
+                valid.copy(categoryId = null, amount = "0"),
+                "editor_category",
+                InputIssue.MISSING_CATEGORY
+            ),
+            Triple(valid.copy(currency = "ZZZ"), "editor_currency", InputIssue.INVALID_CURRENCY),
+            Triple(valid.copy(amount = "0"), "editor_amount", InputIssue.INVALID_AMOUNT),
+            Triple(
+                valid.copy(amount = "92233720368547758.08"),
+                "editor_amount",
+                InputIssue.AMOUNT_OVERFLOW
+            ),
+            Triple(valid.copy(rate = ""), "editor_rate", InputIssue.MISSING_RATE),
+            Triple(valid.copy(rate = "bad"), "editor_rate", InputIssue.INVALID_RATE),
+            Triple(valid.copy(localTime = "bad"), "editor_time", InputIssue.INVALID_TIME),
+            Triple(
+                valid.copy(localTime = "2026-03-08T02:30", zoneId = "America/New_York"),
+                "editor_time",
+                InputIssue.TIME_GAP
+            ),
+            Triple(
+                valid.copy(localTime = "2026-11-01T01:30", zoneId = "America/New_York"),
+                "editor_time",
+                InputIssue.TIME_AMBIGUOUS
+            ),
+            Triple(valid.copy(note = "x".repeat(2001)), "editor_note", InputIssue.INVALID_NOTE)
+        )
+        for (darkTheme in listOf(false, true)) {
+            compose.runOnIdle { dark.value = darkTheme }
+            for ((fields, target, issue) in cases) {
+                compose.runOnUiThread { model.fields { fields } }
+                val away = if (target == "editor_note") "editor_amount" else "editor_note"
+                compose.onNodeWithTag(away).performScrollTo()
+                compose.onNodeWithTag(target).assertIsNotDisplayed()
+                click("editor_save")
+                waitTag("editor_error")
+                assertEquals(issue, model.state.value.editorIssue?.issue)
+                compose.onNodeWithTag(target).assertIsDisplayed()
+                if (issue == InputIssue.TIME_AMBIGUOUS) {
+                    compose.onNodeWithTag("editor_time_occurrence_0").assertIsDisplayed()
+                }
+                assertEquals(0, historyRows().size)
+                if (issue == InputIssue.INVALID_CURRENCY) {
+                    saveProof("backlog-002-large-" + darkTheme)
+                }
+            }
+        }
+        click("editor_cancel")
+        waitTag("home_balance")
+        assertEquals(0, historyRows().size)
     }
 
     @Test

@@ -9,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -291,6 +292,37 @@ class KeyboardVisibilityTest {
         }
         compose.onNodeWithTag("setup_zone").assertDoesNotExist()
         assertVisible("setup_save")
+        assertZeroWrites()
+    }
+
+    @Test fun focusingAnotherFieldAfterFailedSaveKeepsItAboveKeyboard() {
+        render()
+        editEntry()
+        compose.runOnUiThread {
+            ledger.fields { it.copy(note = "Synthetic line\n".repeat(50)) }
+        }
+        openKeyboard("editor_note")
+        compose.onNodeWithTag("editor_save").performClick()
+        compose.waitUntil(10000) {
+            ledger.state.value.editorIssue != null &&
+                keyboardInsets()?.isVisible(WindowInsetsCompat.Type.ime()) == false
+        }
+        compose.waitForIdle()
+        compose.onNodeWithTag("editor_category").assertIsDisplayed()
+        // Focus alone must not retrigger a reveal of the previous validation error.
+        openKeyboard("editor_note")
+        assertVisible("editor_note")
+        compose.runOnUiThread {
+            androidx.core.view.WindowCompat.getInsetsController(
+                compose.activity.window,
+                compose.activity.window.decorView
+            ).hide(WindowInsetsCompat.Type.ime())
+        }
+        compose.waitUntil(10000) {
+            keyboardInsets()?.isVisible(WindowInsetsCompat.Type.ime()) == false
+        }
+        compose.waitForIdle()
+        compose.onNodeWithTag("editor_note").assertIsDisplayed()
         assertZeroWrites()
     }
 
