@@ -402,6 +402,63 @@ class LedgerUiTest {
     }
 
     @Test
+    fun currencyPrecisionHintUpdatesWithoutChangingAmountInBothThemes() {
+        seedReady()
+        val dark = androidx.compose.runtime.mutableStateOf(false)
+        render(dark, fontScale = 2f)
+        waitTag("home_add")
+        click("home_add")
+        compose.runOnUiThread { model.fields { it.copy(categoryId = id(1)) } }
+        val generic = context.getString(R.string.ledger_amount_hint)
+        val cases = listOf(
+            "USD" to "USD: дробных знаков — 2. Разделитель — точка или запятая.",
+            "JPY" to "JPY: целая сумма, без дробной части.",
+            " kwd " to "KWD: дробных знаков — 3. Разделитель — точка или запятая.",
+            "CLF" to "CLF: дробных знаков — 4. Разделитель — точка или запятая.",
+            "" to generic,
+            "US" to generic,
+            "ZZZ" to generic,
+            "XAU" to generic,
+            "   USD   " to generic
+        )
+        for (darkTheme in listOf(false, true)) {
+            compose.runOnIdle { dark.value = darkTheme }
+            text("editor_amount", "1,2345")
+            for ((currency, hint) in cases) {
+                compose.onNodeWithTag("editor_currency").performScrollTo()
+                    .performTextReplacement(currency)
+                compose.onNodeWithTag("editor_amount").performScrollTo()
+                    .assertTextContains("1,2345")
+                compose.onNodeWithText(hint, useUnmergedTree = true).assertIsDisplayed()
+                assertEquals("1,2345", model.state.value.editor!!.fields.amount)
+                assertEquals(0, historyRows().size)
+                if (currency == " kwd ") saveProof("backlog-003-" + darkTheme)
+            }
+            text("editor_currency", "JPY")
+            click("editor_save")
+            waitTag("editor_error")
+            compose.onNodeWithTag("editor_amount_error", useUnmergedTree = true)
+                .assertIsDisplayed()
+            compose.onNodeWithText(cases[1].second, useUnmergedTree = true).assertDoesNotExist()
+            assertEquals(0, historyRows().size)
+            text("editor_amount", "12")
+            compose.onNodeWithTag(
+                "editor_amount_error",
+                useUnmergedTree = true
+            ).assertDoesNotExist()
+            compose.onNodeWithText(cases[1].second, useUnmergedTree = true).assertIsDisplayed()
+        }
+        text("editor_currency", "USD")
+        text("editor_amount", "1,50")
+        click("editor_save")
+        waitTag("home_balance")
+        assertEquals(
+            150L,
+            historyRows().single().transaction.entry.conversion.sourceAmount.amountMinor
+        )
+    }
+
+    @Test
     fun amountErrorAppearsAtFieldAndClearsAfterCorrectionInBothThemes() {
         seedReady()
         val dark = androidx.compose.runtime.mutableStateOf(false)

@@ -16,6 +16,8 @@
     <string name="ledger_income">Доход</string>
     <string name="ledger_expense">Расход</string>
     <string name="ledger_amount">Сумма</string>
+    <string name="ledger_amount_whole_hint">%1$s: целая сумма, без дробной части.</string>
+    <string name="ledger_amount_precision_hint">%1$s: дробных знаков — %2$d. Разделитель — точка или запятая.</string>
     <string name="ledger_amount_hint">Положительная сумма; точка или запятая — дробная часть</string>
     <string name="ledger_source_currency">Исходная валюта</string>
     <string name="ledger_choose_category">Выбрать категорию</string>
