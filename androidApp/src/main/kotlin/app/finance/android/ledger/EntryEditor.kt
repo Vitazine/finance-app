@@ -25,6 +25,8 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.finance.android.R
+import app.finance.core.money.CurrencyCode
+import app.finance.core.money.MoneyResult
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -32,6 +34,20 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
     val editor = state.editor ?: return
     val settings = state.settings ?: return
     val fields = editor.fields
+    val currency = if (fields.currency.length <= 8) {
+        (CurrencyCode.resolve(fields.currency.trim().uppercase()) as? MoneyResult.Success)?.value
+    } else {
+        null
+    }
+    val amountHint = when {
+        currency == null -> stringResource(R.string.ledger_amount_hint)
+        currency.exponent == 0 -> stringResource(R.string.ledger_amount_whole_hint, currency.code)
+        else -> stringResource(
+            R.string.ledger_amount_precision_hint,
+            currency.code,
+            currency.exponent
+        )
+    }
     Column(
         Modifier.fillMaxSize().padding(
             padding
@@ -82,7 +98,7 @@ internal fun EntryEditor(state: LedgerUiState, model: LedgerViewModel, padding: 
             { text ->
                 model.fields { it.copy(amount = text) }
             },
-            stringResource(R.string.ledger_amount_hint),
+            amountHint,
             decimal = true,
             error = state.editorIssue?.issue?.takeIf {
                 it == InputIssue.INVALID_AMOUNT || it == InputIssue.AMOUNT_OVERFLOW
